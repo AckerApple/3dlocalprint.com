@@ -1,4 +1,4 @@
-import swatches from "./swatches.js";
+import { swatches } from "./swatches.js";
 
 const grid = document.getElementById("swatchGrid");
 const summaryList = document.getElementById("summaryList");
@@ -175,14 +175,15 @@ const renderSummaryView = () => {
     applyChip(chip, item.hex);
 
     const details = document.createElement("div");
+    details.className = "summary-details"
     const label = document.createElement("strong");
     label.textContent = item.label || "Untitled";
     details.appendChild(label);
 
-    const metaParts = [];
-    if (item.color_name) metaParts.push(`Name: ${item.color_name}`);
-    if (item.swatch_code) metaParts.push(`Code: ${item.swatch_code}`);
-    if (item.hex) metaParts.push(`Hex: ${item.hex}`);
+    const metaItems = [];
+    if (item.color_name) metaItems.push(`Name: ${item.color_name}`);
+    if (item.swatch_code) metaItems.push(`Code: ${item.swatch_code}`);
+    if (item.hex) metaItems.push(`Hex: ${item.hex}`);
 
     if (item.url) {
       const link = document.createElement("a");
@@ -190,21 +191,21 @@ const renderSummaryView = () => {
       link.target = "_blank";
       link.rel = "noopener noreferrer";
       link.textContent = item.url;
-      metaParts.push(link);
+      metaItems.push(link);
     }
 
-    if (metaParts.length) {
+    if (metaItems.length) {
       const meta = document.createElement("div");
       meta.className = "summary-meta";
-      metaParts.forEach((part, index) => {
-        if (index > 0) {
-          meta.append(" • ");
-        }
+      metaItems.forEach((part) => {
+        const itemSpan = document.createElement("span");
+        itemSpan.className = "summary-meta-item";
         if (part instanceof HTMLElement) {
-          meta.appendChild(part);
+          itemSpan.appendChild(part);
         } else {
-          meta.append(part);
+          itemSpan.textContent = part;
         }
+        meta.appendChild(itemSpan);
       });
       details.appendChild(meta);
     }
