@@ -10,7 +10,9 @@ const jsonViewButton = document.getElementById("jsonViewButton");
 const addSwatchButton = document.getElementById("addSwatchButton");
 const jsonPanel = document.getElementById("jsonPanel");
 
-const data = swatches.map((item) => ({ ...item }));
+const data = swatches
+  .map((item) => ({ ...item }))
+  .sort((a, b) => (Number(a.number) || 0) - (Number(b.number) || 0));
 let viewMode = "summary";
 
 const isValidHex = (value) =>

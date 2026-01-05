@@ -1,5 +1,12 @@
 export const swatches = [
   {
+    "number": 35,
+    "label": "HATCHBOX PLA MAX V2",
+    "color_name": "Flesh/Light Brown",
+    "hex": "#ba8861",
+    "url": "https://www.amazon.com/dp/B0FGZ9S77Y"
+  },
+  {
     "number": 1,
     "label": "3DHoJor - Silk PLA",
     "color_name": "Blue",
