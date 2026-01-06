@@ -29,6 +29,9 @@ const serializeSwatches = () =>
     if (item.swatch_code) cleaned.swatch_code = item.swatch_code;
     if (item.hex) cleaned.hex = item.hex;
     if (item.url) cleaned.url = item.url;
+    if (item.spool_inventory !== undefined && item.spool_inventory !== "") {
+      cleaned.spool_inventory = Number(item.spool_inventory) || 0;
+    }
 
     return cleaned;
   });
@@ -124,6 +127,13 @@ const renderEditView = () => {
     hexWrapper.appendChild(hexRow);
     fields.appendChild(hexWrapper);
     fields.appendChild(
+      buildField("Spool Inventory", item.spool_inventory, (value) => {
+        item.spool_inventory = value;
+        updateOutput();
+        renderSummaryView();
+      }, "number")
+    );
+    fields.appendChild(
       buildField("Label", item.label, (value) => {
         item.label = value;
         updateOutput();
@@ -186,6 +196,9 @@ const renderSummaryView = () => {
     if (item.color_name) metaItems.push(`Name: ${item.color_name}`);
     if (item.swatch_code) metaItems.push(`Code: ${item.swatch_code}`);
     if (item.hex) metaItems.push(`Hex: ${item.hex}`);
+    if (item.spool_inventory !== undefined && item.spool_inventory !== "") {
+      metaItems.push(`Spool Inventory: ${item.spool_inventory}`);
+    }
 
     if (item.url) {
       const link = document.createElement("a");
@@ -264,6 +277,7 @@ addSwatchButton.addEventListener("click", () => {
     swatch_code: "",
     hex: "",
     url: "",
+    spool_inventory: 1,
   });
   updateOutput();
   render();
