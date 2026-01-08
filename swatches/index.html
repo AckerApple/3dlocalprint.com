@@ -7,39 +7,8 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <header>
-      <h1>Swatch Editor</h1>
-      <p>
-        Edit swatches in place. The preview updates instantly, and the JSON at
-        the bottom is ready to copy back into your source file.
-      </p>
-    </header>
-    <main>
-      <section class="panel">
-        <div class="meta">
-          <div class="controls">
-            <div class="toggle" role="tablist" aria-label="View toggle">
-              <button id="summaryViewButton" class="active" role="tab" type="button">
-                Summary
-              </button>
-              <button id="editViewButton" role="tab" type="button">Edit</button>
-              <button id="jsonViewButton" role="tab" type="button">JSON</button>
-            </div>
-            <button id="addSwatchButton" class="add-button" type="button">
-              + Add swatch
-            </button>
-            <div id="count"></div>
-          </div>
-        </div>
-        <div id="swatchGrid" class="swatch-grid"></div>
-        <div id="summaryList" class="summary-list" hidden></div>
-      </section>
-
-      <section id="jsonPanel" class="panel" hidden>
-        <h2 class="output-title">JSON output</h2>
-        <textarea id="jsonOutput" spellcheck="false" readonly></textarea>
-      </section>
-    </main>
+    <header id="swatchHeader"></header>
+    <main id="swatchApp"></main>
     <footer class="footer">
       <div class="footer-panels">
         <a
