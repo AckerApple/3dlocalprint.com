@@ -1,6 +1,5 @@
 import { swatches } from "./swatches.js";
 import { SwatchApp } from "./SwatchApp.tag.js";
-import { SwatchRow } from "./SwatchRow.tag.js";
 import {
   tag,
   tagElement,
@@ -36,6 +35,7 @@ const serializeSwatches = () =>
 
     if (item.color_name) cleaned.color_name = item.color_name;
     if (item.swatch_code) cleaned.swatch_code = item.swatch_code;
+    if (item.qr_search_data) cleaned.qr_search_data = item.qr_search_data;
     if (item.hex) cleaned.hex = item.hex;
     if (item.url) cleaned.url = item.url;
     if (item.spool_inventory !== undefined && item.spool_inventory !== "") {
@@ -53,6 +53,7 @@ const addSwatch = () => {
     label: "",
     color_name: "",
     swatch_code: "",
+    qr_search_data: "",
     hex: "",
     url: "",
     spool_inventory: 1,

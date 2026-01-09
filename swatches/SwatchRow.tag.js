@@ -10,6 +10,8 @@ import {
   noElement,
   output,
 } from "https://cdn.jsdelivr.net/gh/AckerApple/taggedjs@dist/bundle.js";
+import { extractQrToken } from "./qr-utils.js";
+import { CodeScannerModal } from "./CodeScannerModal.tag.js";
 
 const isValidHex = (value) =>
   /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(value);
@@ -30,9 +32,27 @@ const numberHandler = (item, field) => ({
 });
 
 const editCard = tag((item, index, toggleRowEdit) => {
-  toggleRowEdit = output(toggleRowEdit)
+  editCard.updates((args) => {
+    [item, index, toggleRowEdit] = args;
+  });
+  toggleRowEdit = output(toggleRowEdit);
+  let showQrScanner = false;
+
+  const applyQrScan = (text) => {
+    const token = extractQrToken(text || "");
+    item.qr_search_data = token || text || "";
+    showQrScanner = false;
+    console.log('👉 APPLIED', text)
+  };
   return div(
     { class: "swatch-card" },
+    _=> showQrScanner &&
+      CodeScannerModal({
+        title: "Scan QR for this spool",
+        onClose: () => (showQrScanner = false),
+        onApply: applyQrScan,
+        applyLabel: "Apply QR",
+      }),
     div(
       { class: "edit-card-header" },
       span({ class: "edit-card-title" }, `Swatch ${item.number || "-"}`),
@@ -104,6 +124,24 @@ const editCard = tag((item, index, toggleRowEdit) => {
         })
       ),
       label(
+        "QR Search Data",
+        div(
+          { class: "qr-input-row" },
+          input({
+            value: () => item.qr_search_data ?? "",
+            ...textHandlers(item, "qr_search_data"),
+          }),
+          button(
+            {
+              type: "button",
+              class: "qr-scan-button",
+              onClick: () => showQrScanner = true,
+            },
+            "Scan QR"
+          )
+        )
+      ),
+      label(
         "URL",
         input({
           type: "url",
@@ -113,10 +151,13 @@ const editCard = tag((item, index, toggleRowEdit) => {
       )
     )
   );
-})
+});
 
 const summaryRow = tag((item, index, toggleRowEdit) => {
-  toggleRowEdit = output(toggleRowEdit)
+  summaryRow.updates((args) => {
+    [item, index, toggleRowEdit] = args;
+  });
+  toggleRowEdit = output(toggleRowEdit);
   return div(
     { class: "summary-row" },
     div(() => item.number || "-"),
@@ -186,7 +227,7 @@ const summaryRow = tag((item, index, toggleRowEdit) => {
       }
     )
   );
-})
+});
 
 export const SwatchRow = tag(
   (
@@ -195,6 +236,7 @@ export const SwatchRow = tag(
   ) => {
     SwatchRow.updates((args) => {
       [item, index, isEditAll, activeEditIndex, toggleRowEdit] = args;
+      toggleRowEdit = output(toggleRowEdit)
     });
 
     toggleRowEdit = output(toggleRowEdit)

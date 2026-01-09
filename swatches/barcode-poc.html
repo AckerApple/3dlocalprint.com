@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Barcode Scan POC</title>
+    <link rel="stylesheet" href="./barcode-poc.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="app-header">
+        <h1>Barcode Scan POC</h1>
+        <p>Proof of concept for reading barcode text via device camera.</p>
+      </header>
+
+      <section class="panel">
+        <div class="controls">
+          <button id="startButton" type="button">Start camera</button>
+          <button id="stopButton" type="button" disabled>Stop camera</button>
+        </div>
+        <div class="preview">
+          <video id="preview" playsinline muted></video>
+        </div>
+        <div class="output">
+          <div class="label">Barcode Text</div>
+          <pre id="barcodeOutput">(no scan yet)</pre>
+        </div>
+        <div id="status" class="status"></div>
+      </section>
+    </main>
+
+    <script type="module" src="./barcode-poc.js"></script>
+  </body>
+</html>
