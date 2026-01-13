@@ -19,3 +19,8 @@ export const toggleEditAll = () => {
     editingIndex = null;
   }
 };
+
+export const setEditingIndex = (index) => {
+  editAll = false;
+  editingIndex = index;
+};

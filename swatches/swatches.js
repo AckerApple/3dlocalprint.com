@@ -1,10 +1,11 @@
 export const swatches = [
   {
-    "number": 35,
-    "label": "HATCHBOX PLA MAX V2",
-    "color_name": "Flesh/Light Brown",
-    "hex": "#ba8861",
-    "url": "https://www.amazon.com/dp/B0FGZ9S77Y",
+    "number": 0,
+    "label": "PolyTerra PLA",
+    "manufacturer": "PolyMaker",
+    "qr_search_data": "1100302042",
+    "barcode_search_data": "6938936708209",
+    "hex": "#ffffff",
     "spool_inventory": 1
   },
   {
@@ -17,7 +18,8 @@ export const swatches = [
   },
   {
     "number": 15,
-    "label": "Bambu lab PLA Matte Ivory",
+    "label": "PLA Matte Ivory",
+    "manufacturer": "Bambu",
     "color_name": "White",
     "swatch_code": "11100",
     "hex": "#f0f0f0",
@@ -25,8 +27,18 @@ export const swatches = [
     "spool_inventory": 1
   },
   {
+    "number": 35,
+    "label": "PLA MAX V2",
+    "manufacturer": "Hatchbox",
+    "color_name": "Flesh/Light Brown",
+    "hex": "#ba8861",
+    "url": "https://www.amazon.com/dp/B0FGZ9S77Y",
+    "spool_inventory": 1
+  },
+  {
     "number": 40,
-    "label": "Polymaker",
+    "label": "",
+    "manufacturer": "PolyMaker",
     "color_name": "Red",
     "hex": "#D90102",
     "url": "https://www.amazon.com/dp/B099KD9GYK",
@@ -34,7 +46,8 @@ export const swatches = [
   },
   {
     "number": 55,
-    "label": "Polymaker",
+    "label": "",
+    "manufacturer": "PolyMaker",
     "color_name": "Black",
     "hex": "#030305",
     "url": "https://www.amazon.com/dp/B099JXQN6K",

@@ -20,7 +20,9 @@ export const Modal = tag(({ title, onClose, content }) => {
     if (dialogEl?.close) {
       dialogEl.close();
     }
+
     onClose();
+    console.log('Modal.tag.js close')
   };
 
   const onBackdropClick = (event) => {

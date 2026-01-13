@@ -9,19 +9,25 @@ import {
 import { QrScannerPanel } from "./QrScanner.tag.js";
 
 export const CodeScannerModal = tag(
-  ({ title, onClose, onApply, applyLabel }) => {
+  ({ title, onClose, onApply, applyLabel, ScannerPanel }) => {
     CodeScannerModal.updates((args) => {
-      [{ title, onClose, onApply, applyLabel }] = args;
+      [{ title, onClose, onApply, applyLabel, ScannerPanel }] = args;
       
       onClose = output(onClose);
       
       if (onApply) {
         onApply = output(onApply);
       }
+      if (typeof ScannerPanel !== "function") {
+        ScannerPanel = QrScannerPanel;
+      }
     });
     onClose = output(onClose);
     if (onApply) {
       onApply = output(onApply);
+    }
+    if (typeof ScannerPanel !== "function") {
+      ScannerPanel = QrScannerPanel;
     }
     const dialogId = `qr-modal-${Math.random().toString(36).slice(2, 9)}`;
 
@@ -30,6 +36,8 @@ export const CodeScannerModal = tag(
       if (dialogEl?.close) {
         dialogEl.close();
       }
+
+      // onClose()
     };
 
     let pendingText = "";
@@ -56,6 +64,7 @@ export const CodeScannerModal = tag(
 
     const onDialogClose = () => {
       onClose();
+      console.log('closed scanner')
     };
 
     const onDialogCancel = (event) => {
@@ -63,6 +72,7 @@ export const CodeScannerModal = tag(
         event.preventDefault();
       }
       closeDialog();
+      console.log('cancel scanner')
     };
 
     return dialog(
@@ -103,7 +113,7 @@ export const CodeScannerModal = tag(
         ),
         div(
           { class: "qr-modal-body" },
-          _=> QrScannerPanel({
+          _=> ScannerPanel({
             onResult: setPendingText
           })
         )

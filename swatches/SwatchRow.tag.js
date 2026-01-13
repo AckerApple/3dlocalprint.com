@@ -5,13 +5,16 @@ import {
   button,
   label,
   input,
+  htmlTag,
   strong,
   a,
   noElement,
   output,
 } from "https://cdn.jsdelivr.net/gh/AckerApple/taggedjs@dist/bundle.js";
 import { extractQrToken } from "./qr-utils.js";
+import { extractBarcodeToken } from "./barcode-utils.js";
 import { CodeScannerModal } from "./CodeScannerModal.tag.js";
+import { BarcodeScannerPanel } from "./BarcodeScanner.tag.js";
 
 const isValidHex = (value) =>
   /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(value);
@@ -31,18 +34,32 @@ const numberHandler = (item, field) => ({
   onChange: (event) => setItemValue(item, field, event.target.value),
 });
 
+const selectHandlers = (item, field) => ({
+  onChange: (event) => setItemValue(item, field, event?.target?.value || ""),
+});
+
+const selectTag = htmlTag("select");
+const optionTag = htmlTag("option");
+
 const editCard = tag((item, index, toggleRowEdit) => {
   editCard.updates((args) => {
     [item, index, toggleRowEdit] = args;
   });
   toggleRowEdit = output(toggleRowEdit);
   let showQrScanner = false;
+  let showBarcodeScanner = false;
 
   const applyQrScan = (text) => {
     const token = extractQrToken(text || "");
     item.qr_search_data = token || text || "";
     showQrScanner = false;
     console.log('👉 APPLIED', text)
+  };
+  const applyBarcodeScan = (text) => {
+    const token = extractBarcodeToken(text || "");
+    item.barcode_search_data = token || text || "";
+    showBarcodeScanner = false;
+    console.log("👉 BARCODE APPLIED", text);
   };
   return div(
     { class: "swatch-card" },
@@ -52,6 +69,14 @@ const editCard = tag((item, index, toggleRowEdit) => {
         onClose: () => (showQrScanner = false),
         onApply: applyQrScan,
         applyLabel: "Apply QR",
+      }),
+    _=> showBarcodeScanner &&
+      CodeScannerModal({
+        title: "Scan barcode for this spool",
+        onClose: () => (showBarcodeScanner = false),
+        onApply: applyBarcodeScan,
+        applyLabel: "Apply barcode",
+        ScannerPanel: BarcodeScannerPanel,
       }),
     div(
       { class: "edit-card-header" },
@@ -79,7 +104,7 @@ const editCard = tag((item, index, toggleRowEdit) => {
       label(
         "Hex Color",
         div(
-          { style: "display:flex; gap:10px; align-items:center;" },
+          { class: "hex-input-row" },
           input({
             type: "color",
             value: () => (isValidHex(item.hex) ? item.hex : "#000000"),
@@ -110,6 +135,32 @@ const editCard = tag((item, index, toggleRowEdit) => {
         })
       ),
       label(
+        "Manufacturer",
+        selectTag(
+          {
+            value: () => item.manufacturer ?? "",
+            ...selectHandlers(item, "manufacturer"),
+          },
+          optionTag({ value: "" }, "Select manufacturer"),
+          optionTag({ value: "Bambu" }, "Bambu"),
+          optionTag({ value: "PolyMaker" }, "PolyMaker"),
+          optionTag({ value: "Hatchbox" }, "Hatchbox")
+        )
+      ),
+      label(
+        "Material Type",
+        selectTag(
+          {
+            value: () => item.material_type ?? "",
+            ...selectHandlers(item, "material_type"),
+          },
+          optionTag({ value: "" }, "Select material"),
+          optionTag({ value: "PETG" }, "PETG"),
+          optionTag({ value: "PLA" }, "PLA"),
+          optionTag({ value: "TPU" }, "TPU")
+        )
+      ),
+      label(
         "Color name",
         input({
           value: () => item.color_name ?? "",
@@ -128,6 +179,7 @@ const editCard = tag((item, index, toggleRowEdit) => {
         div(
           { class: "qr-input-row" },
           input({
+            class: "qr-edit-input",
             value: () => item.qr_search_data ?? "",
             ...textHandlers(item, "qr_search_data"),
           }),
@@ -138,6 +190,25 @@ const editCard = tag((item, index, toggleRowEdit) => {
               onClick: () => showQrScanner = true,
             },
             "Scan QR"
+          )
+        )
+      ),
+      label(
+        "Bar Code",
+        div(
+          { class: "qr-input-row" },
+          input({
+            class: "qr-edit-input",
+            value: () => item.barcode_search_data ?? "",
+            ...textHandlers(item, "barcode_search_data"),
+          }),
+          button(
+            {
+              type: "button",
+              class: "qr-scan-button",
+              onClick: () => showBarcodeScanner = true,
+            },
+            "Scan barcode"
           )
         )
       ),
@@ -185,6 +256,11 @@ const summaryRow = tag((item, index, toggleRowEdit) => {
         if (item.color_name) {
           parts.push(
             span({ class: "summary-meta-item" }, `Name: ${item.color_name}`)
+          );
+        }
+        if (item.manufacturer) {
+          parts.push(
+            span({ class: "summary-meta-item" }, `Maker: ${item.manufacturer}`)
           );
         }
         if (item.swatch_code) {

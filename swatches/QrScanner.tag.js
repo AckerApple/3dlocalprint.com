@@ -6,7 +6,6 @@ import {
   pre,
   span,
   output,
-  onDestroy,
   onInit,
   htmlTag,
 } from "https://cdn.jsdelivr.net/gh/AckerApple/taggedjs@dist/bundle.js";
@@ -88,7 +87,7 @@ export const QrScannerPanel = tag(({onResult}) => {
     }
   };
 
-  onDestroy(() => {
+  tag.onDestroy(() => {
     stopScanner()
     console.log('🔴 stop scanner')
   });

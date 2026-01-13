@@ -1,5 +1,6 @@
 import { swatches } from "./swatches.js";
 import { SwatchApp } from "./SwatchApp.tag.js";
+import { setEditingIndex } from "./displayFunctions.js";
 import {
   tag,
   tagElement,
@@ -34,8 +35,11 @@ const serializeSwatches = () =>
     };
 
     if (item.color_name) cleaned.color_name = item.color_name;
+    if (item.manufacturer) cleaned.manufacturer = item.manufacturer;
+    if (item.material_type) cleaned.material_type = item.material_type;
     if (item.swatch_code) cleaned.swatch_code = item.swatch_code;
     if (item.qr_search_data) cleaned.qr_search_data = item.qr_search_data;
+    if (item.barcode_search_data) cleaned.barcode_search_data = item.barcode_search_data;
     if (item.hex) cleaned.hex = item.hex;
     if (item.url) cleaned.url = item.url;
     if (item.spool_inventory !== undefined && item.spool_inventory !== "") {
@@ -46,18 +50,20 @@ const serializeSwatches = () =>
   });
 
 const addSwatch = () => {
-  const nextNumber =
-    Math.max(0, ...data.map((item) => Number(item.number) || 0)) + 1;
   data.unshift({
-    number: nextNumber,
+    number: 0,
     label: "",
+    manufacturer: "",
+    material_type: "",
     color_name: "",
     swatch_code: "",
     qr_search_data: "",
+    barcode_search_data: "",
     hex: "",
     url: "",
     spool_inventory: 1,
   });
+  setEditingIndex(0);
 };
 
 const App = tag(() =>
