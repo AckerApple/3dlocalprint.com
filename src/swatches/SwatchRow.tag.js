@@ -151,7 +151,7 @@ const editCard = tag((item, index, toggleRowEdit, manufacturers, onSave, onDupli
       "Number",
       input
         .type`number`
-        .value(() => item.number ?? "")
+          .value(_=> item.number ?? "")
         .onChange(numberHandler(item, "number").onChange)
         .onKeyup(numberHandler(item, "number").onKeyup)()
     ),
@@ -170,14 +170,14 @@ const editCard = tag((item, index, toggleRowEdit, manufacturers, onSave, onDupli
         div.class`hex-input-row`(
           input
             .type`color`
-            .value(() => (isValidHex(item.hex) ? item.hex : "#000000"))
+            .value(_=> (isValidHex(item.hex) ? item.hex : "#000000"))
             .style`width:56px; min-width:56px; padding:0; height:42px;`
             .onChange((event) => {
               markDirty();
               setItemValue(item, "hex", event.target.value.trim());
             })(),
           input
-            .value(() => item.hex ?? "")
+              .value(_=> item.hex ?? "")
             .style`flex:1;`
             .onChange(textHandlers(item, "hex", { trim: true }).onChange)
             .onKeyup(textHandlers(item, "hex", { trim: true }).onKeyup)()
@@ -187,14 +187,14 @@ const editCard = tag((item, index, toggleRowEdit, manufacturers, onSave, onDupli
         "Spool Inventory",
         input
           .type`number`
-          .value(() => item.spool_inventory ?? "")
+          .value(_=> item.spool_inventory ?? "")
           .onChange(numberHandler(item, "spool_inventory").onChange)
           .onKeyup(numberHandler(item, "spool_inventory").onKeyup)()
       ),
       label(
         "Label",
         input
-          .value(() => item.label ?? "")
+          .value(_=> item.label ?? "")
           .onChange(textHandlers(item, "label").onChange)
           .onKeyup(textHandlers(item, "label").onKeyup)()
       ),
@@ -204,11 +204,11 @@ const editCard = tag((item, index, toggleRowEdit, manufacturers, onSave, onDupli
           .onChange(selectHandlers(item, "manufacturer").onChange)(
           option
             .value``
-            .selected(() => !item.manufacturer)("Select manufacturer"),
+            .selected(_=> !item.manufacturer)("Select manufacturer"),
           ...(manufacturers || []).map((manufacturer) =>
             option
               .value(manufacturer)
-              .selected(() => item.manufacturer === manufacturer)(manufacturer)
+              .selected(_=> item.manufacturer === manufacturer)(manufacturer)
           )
         )
       ),
@@ -218,11 +218,11 @@ const editCard = tag((item, index, toggleRowEdit, manufacturers, onSave, onDupli
           .onChange(selectHandlers(item, "material_type").onChange)(
           option
             .value``
-            .selected(() => !item.material_type)("Select material"),
+            .selected(_=> !item.material_type)("Select material"),
           ...materialTypes.map((materialType) =>
             option
               .value(materialType)
-              .selected(() => item.material_type === materialType)(materialType)
+              .selected(_=> item.material_type === materialType)(materialType)
           )
         )
       ),
@@ -232,25 +232,25 @@ const editCard = tag((item, index, toggleRowEdit, manufacturers, onSave, onDupli
           .onChange(selectHandlers(item, "location").onChange)(
           option
             .value``
-            .selected(() => !item.location)("Select location"),
+            .selected(_=> !item.location)("Select location"),
           ...locations.map((location) =>
             option
               .value(location)
-              .selected(() => item.location === location)(location)
+              .selected(_=> item.location === location)(location)
           )
         )
       ),
       label(
         "Color name",
         input
-          .value(() => item.color_name ?? "")
+          .value(_=> item.color_name ?? "")
           .onChange(textHandlers(item, "color_name").onChange)
           .onKeyup(textHandlers(item, "color_name").onKeyup)()
       ),
       label(
         "Swatch code",
         input
-          .value(() => item.swatch_code ?? "")
+          .value(_=> item.swatch_code ?? "")
           .onChange(textHandlers(item, "swatch_code").onChange)
           .onKeyup(textHandlers(item, "swatch_code").onKeyup)()
       ),
@@ -259,7 +259,7 @@ const editCard = tag((item, index, toggleRowEdit, manufacturers, onSave, onDupli
         div.class`qr-input-row`(
           input
             .class`qr-edit-input`
-            .value(() => item.qr_search_data ?? "")
+              .value(_=> item.qr_search_data ?? "")
             .onChange(textHandlers(item, "qr_search_data").onChange)
             .onKeyup(textHandlers(item, "qr_search_data").onKeyup)(),
           button
@@ -275,7 +275,7 @@ const editCard = tag((item, index, toggleRowEdit, manufacturers, onSave, onDupli
         div.class`qr-input-row`(
           input
             .class`qr-edit-input`
-            .value(() => item.barcode_search_data ?? "")
+              .value(_=> item.barcode_search_data ?? "")
             .onChange(textHandlers(item, "barcode_search_data").onChange)
             .onKeyup(textHandlers(item, "barcode_search_data").onKeyup)(),
           button
@@ -290,7 +290,7 @@ const editCard = tag((item, index, toggleRowEdit, manufacturers, onSave, onDupli
         "URL",
         input
           .type`url`
-          .value(() => item.url ?? "")
+          .value(_=> item.url ?? "")
           .onChange(textHandlers(item, "url").onChange)
           .onKeyup(textHandlers(item, "url").onKeyup)()
       )
@@ -305,16 +305,16 @@ const summaryRow = tag((item, index, toggleRowEdit) => {
   });
   toggleRowEdit = output(toggleRowEdit);
   return div.class`summary-row`(
-    div(() => item.number || "-"),
+    div(_=> item.number || "-"),
     div.class`summary-swatch`(
       div
         .class`summary-chip`
-        .style(() => `background:${isValidHex(item.hex) ? item.hex : ""};`)(),
-      span.class`summary-swatch-name`(() => item.color_name || "Unnamed")
+        .style(_=> `background:${isValidHex(item.hex) ? item.hex : ""};`)(),
+      span.class`summary-swatch-name`(_=> item.color_name || "Unnamed")
     ),
     div.class`summary-details`(
       div.class`summary-title-row`(
-        strong(() => item.label || "Untitled"),
+        strong(_=> item.label || "Untitled"),
         button
           .type`button`
           .class`summary-edit-button`
@@ -326,7 +326,7 @@ const summaryRow = tag((item, index, toggleRowEdit) => {
           "✏️"
         )
       ),
-      () => {
+      _=> {
         const parts = [];
         if (item.manufacturer) {
           parts.push(
