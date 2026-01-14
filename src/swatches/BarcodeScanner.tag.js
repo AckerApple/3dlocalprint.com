@@ -7,7 +7,7 @@ import {
   output,
   onInit,
   htmlTag,
-} from "https://cdn.jsdelivr.net/gh/AckerApple/taggedjs@dist/bundle.js";
+} from "taggedjs";
 
 const video = htmlTag("video");
 

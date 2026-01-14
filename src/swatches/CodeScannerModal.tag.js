@@ -5,7 +5,7 @@ import {
   output,
   dialog,
   div,
-} from "https://cdn.jsdelivr.net/gh/AckerApple/taggedjs@dist/bundle.js";
+} from "taggedjs";
 import { QrScannerPanel } from "./QrScanner.tag.js";
 
 export const CodeScannerModal = tag(
@@ -44,12 +44,10 @@ export const CodeScannerModal = tag(
 
     const setPendingText = (text) => {
       pendingText = text || "";
-      console.log('pendingText', pendingText)
       onApply(pendingText)
     };
 
     const applyAndClose = () => {
-      console.log('>>> pendingText', pendingText)
       if (onApply) {
         onApply(pendingText);
       }
@@ -64,7 +62,6 @@ export const CodeScannerModal = tag(
 
     const onDialogClose = () => {
       onClose();
-      console.log('closed scanner')
     };
 
     const onDialogCancel = (event) => {
@@ -72,7 +69,6 @@ export const CodeScannerModal = tag(
         event.preventDefault();
       }
       closeDialog();
-      console.log('cancel scanner')
     };
 
     return dialog(

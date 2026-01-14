@@ -1,4 +1,4 @@
-import QrScanner from "https://unpkg.com/qr-scanner@1.4.2/qr-scanner.min.js";
+import QrScanner from "qr-scanner";
 import {
   tag,
   callback,
@@ -8,10 +8,12 @@ import {
   output,
   onInit,
   htmlTag,
-} from "https://cdn.jsdelivr.net/gh/AckerApple/taggedjs@dist/bundle.js";
+} from "taggedjs";
 
-QrScanner.WORKER_PATH =
-  "https://unpkg.com/qr-scanner@1.4.2/qr-scanner-worker.min.js";
+QrScanner.WORKER_PATH = new URL(
+  "qr-scanner/qr-scanner-worker.min.js",
+  import.meta.url
+).toString();
 
 const video = htmlTag("video");
 

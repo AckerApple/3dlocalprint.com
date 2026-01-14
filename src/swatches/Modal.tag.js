@@ -5,7 +5,7 @@ import {
   output,
   dialog,
   div,
-} from "https://cdn.jsdelivr.net/gh/AckerApple/taggedjs@dist/bundle.js";
+} from "taggedjs";
 
 export const Modal = tag(({ title, onClose, content }) => {
   Modal.updates((args) => {
@@ -22,7 +22,6 @@ export const Modal = tag(({ title, onClose, content }) => {
     }
 
     onClose();
-    console.log('Modal.tag.js close')
   };
 
   const onBackdropClick = (event) => {
