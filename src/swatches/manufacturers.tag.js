@@ -3,6 +3,7 @@ import {
   adminEmails,
   isAdmin,
   onAuthChanged,
+  prepareAuth,
   signIn,
   signOutUser,
   saveManufacturers,
@@ -162,6 +163,7 @@ const mountSso = (status, userEmail, reason = "") => {
 };
 
 mountSso("loading", "", "initial");
+prepareAuth();
 
 onAuthChanged((user) => {
   isAuthorized = false;

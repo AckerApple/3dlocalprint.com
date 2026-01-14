@@ -3,6 +3,10 @@ import {
   getAuth,
   GoogleAuthProvider,
   onAuthStateChanged,
+  signInWithRedirect,
+  getRedirectResult,
+  setPersistence,
+  browserLocalPersistence,
   signInWithPopup,
   signOut,
 } from "firebase/auth";
@@ -44,7 +48,28 @@ const isAdmin = (user) =>
       adminEmails.includes(user.email || "")
   );
 
-const signIn = () => signInWithPopup(auth, provider);
+const isIOS = () =>
+  typeof navigator !== "undefined" &&
+  /iPad|iPhone|iPod/i.test(navigator.userAgent || "");
+
+const prepareAuth = async () => {
+  try {
+    await setPersistence(auth, browserLocalPersistence);
+  } catch (error) {
+    console.warn("Failed to set auth persistence", error);
+  }
+
+  try {
+    await getRedirectResult(auth);
+  } catch (error) {
+    console.error("Firebase redirect sign-in failed", error);
+  }
+};
+
+const signIn = () =>
+  isIOS()
+    ? signInWithRedirect(auth, provider)
+    : signInWithPopup(auth, provider);
 const signOutUser = () => signOut(auth);
 const onAuthChanged = (callback) => onAuthStateChanged(auth, callback);
 
@@ -133,6 +158,7 @@ const saveAdmins = (items) =>
 export {
   auth,
   isAdmin,
+  prepareAuth,
   signIn,
   signOutUser,
   onAuthChanged,

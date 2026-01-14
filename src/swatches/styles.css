@@ -458,8 +458,9 @@ input:focus {
   word-break: break-word;
   overflow-wrap: anywhere;
   display: grid;
-  grid-template-columns: repeat(3, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
   gap: 6px 18px;
+  min-width: 0;
 }
 
 .summary-meta a {
@@ -724,6 +725,10 @@ input:focus {
 .summary-meta-item + .summary-meta-item::before {
   content: "";
   margin: 0;
+}
+
+.summary-meta-item {
+  min-width: 0;
 }
 
 @media (max-width: 900px) {

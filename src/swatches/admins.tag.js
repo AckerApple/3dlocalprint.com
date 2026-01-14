@@ -1,4 +1,4 @@
-import { adminEmails, isAdmin, onAuthChanged, signIn, signOutUser, saveAdmins, subscribeAdmins } from "./firebase.js";
+import { adminEmails, isAdmin, onAuthChanged, prepareAuth, signIn, signOutUser, saveAdmins, subscribeAdmins } from "./firebase.js";
 import { tag, tagElement, section, div, input, button, p, a, h1 } from "taggedjs";
 import { SwatchNav } from "./SwatchNav.tag.js";
 import { mountSsoPanel, replaceMountRoot } from "./ssoMount.js";
@@ -147,6 +147,7 @@ const mountSso = (status, userEmail, reason = "") => {
 };
 
 mountSso("loading", "", "initial");
+prepareAuth();
 
 onAuthChanged((user) => {
   isAuthorized = false;

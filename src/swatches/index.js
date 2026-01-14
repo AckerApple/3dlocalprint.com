@@ -6,6 +6,7 @@ import {
   isAdmin,
   adminEmails,
   onAuthChanged,
+  prepareAuth,
   signIn,
   signOutUser,
 } from "./firebase.js";
@@ -63,6 +64,7 @@ const mountSso = (status, userEmail, reason = "") => {
 };
 
 mountSso("loading", "", "initial");
+prepareAuth();
 
 onAuthChanged((user) => {
   console.debug("auth changed", { userEmail: user?.email || null });
