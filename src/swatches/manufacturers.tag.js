@@ -7,6 +7,7 @@ import {
   signOutUser,
   saveManufacturers,
   subscribeManufacturers,
+  getCurrentUser,
 } from "./firebase.js";
 import {
   tag,
@@ -235,8 +236,36 @@ const startAuth = async () => {
       if (redirectError) {
         toast.error("Sign-in failed after redirect. Try again.");
       }
+      debugLog("auth:redirectResult", {
+        hasUser: Boolean(redirectResult?.user),
+        email: redirectResult?.user?.email || "",
+      });
       if (redirectResult?.user) {
         handleAuthUser(redirectResult.user, "redirectResult");
+      }
+      if (!redirectResult?.user) {
+        const currentUser = getCurrentUser();
+        if (currentUser) {
+          handleAuthUser(currentUser, "currentUser");
+        } else {
+          let attempts = 0;
+          const retry = () => {
+            attempts += 1;
+            const nextUser = getCurrentUser();
+            debugLog("auth:retry", {
+              attempt: attempts,
+              hasUser: Boolean(nextUser),
+            });
+            if (nextUser) {
+              handleAuthUser(nextUser, "currentUser:retry");
+              return;
+            }
+            if (attempts < 8) {
+              window.setTimeout(retry, 500);
+            }
+          };
+          window.setTimeout(retry, 500);
+        }
       }
     })
     .catch((error) => {

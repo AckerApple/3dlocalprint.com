@@ -1,4 +1,4 @@
-import { isAdminEmail, onAuthChanged, prepareAuth, signIn, signOutUser, saveAdmins, subscribeAdmins } from "./firebase.js";
+import { isAdminEmail, onAuthChanged, prepareAuth, signIn, signOutUser, saveAdmins, subscribeAdmins, getCurrentUser } from "./firebase.js";
 import { tag, tagElement, section, div, input, button, p, a, h1 } from "taggedjs";
 import { SwatchNav } from "./SwatchNav.tag.js";
 import { mountSsoPanel, replaceMountRoot } from "./ssoMount.js";
@@ -148,65 +148,41 @@ const mountSso = (status, userEmail, reason = "") => {
 
 mountSso("loading", "", "initial");
 
-const startAuth = async () => {
-  flushDebugLog();
-  debugLog("page:load", { path: window.location.pathname });
-  window.addEventListener("pageshow", (event) => {
-    debugLog("page:pageshow", { persisted: event.persisted });
-  });
-  window.addEventListener("pagehide", (event) => {
-    debugLog("page:pagehide", { persisted: event.persisted });
-  });
-  window.addEventListener("visibilitychange", () => {
-    debugLog("page:visibility", { state: document.visibilityState });
-  });
-
-  prepareAuth()
-    .then(({ redirectError }) => {
-      if (redirectError) {
-        toast.error("Sign-in failed after redirect. Try again.");
-      }
-    })
-    .catch((error) => {
-      console.error("Failed to prepare auth", error);
-      toast.error("Sign-in setup failed. Try again.");
-    });
-
-  onAuthChanged(async (user) => {
-    debugLog("auth:changed", { userEmail: user?.email || null, reason: "onAuthChanged" });
-    isAuthorized = false;
-    if (!user) {
-      if (stopAdmins) {
-        stopAdmins();
-        stopAdmins = null;
-      }
-      mountSso("login", "", "auth:logged-out");
-      return;
+const handleAuthUser = async (user, reason = "") => {
+  debugLog("auth:changed", { userEmail: user?.email || null, reason });
+  isAuthorized = false;
+  if (!user) {
+    if (stopAdmins) {
+      stopAdmins();
+      stopAdmins = null;
     }
+    mountSso("login", "", "auth:logged-out");
+    return;
+  }
 
-    let isAllowed = false;
-    try {
-      isAllowed = await isAdminEmail(user.email || "");
-    } catch (error) {
-      console.error("Failed to load admin list", error);
-      toast.error("Unable to verify access. Check Firestore rules.");
-      mountSso("denied", user.email || "", "auth:permissions");
-      return;
+  let isAllowed = false;
+  try {
+    isAllowed = await isAdminEmail(user.email || "");
+  } catch (error) {
+    console.error("Failed to load admin list", error);
+    toast.error("Unable to verify access. Check Firestore rules.");
+    mountSso("denied", user.email || "", "auth:permissions");
+    return;
+  }
+
+  if (!isAllowed) {
+    if (stopAdmins) {
+      stopAdmins();
+      stopAdmins = null;
     }
+    toast.error(`Signed in as ${user.email || "unknown"} but not authorized.`);
+    mountSso("denied", user.email || "", "auth:denied");
+    return;
+  }
 
-    if (!isAllowed) {
-      if (stopAdmins) {
-        stopAdmins();
-        stopAdmins = null;
-      }
-      toast.error(`Signed in as ${user.email || "unknown"} but not authorized.`);
-      mountSso("denied", user.email || "", "auth:denied");
-      return;
-    }
-
-    isAuthorized = true;
-    if (!stopAdmins) {
-      stopAdmins = subscribeAdmins((items) => {
+  isAuthorized = true;
+  if (!stopAdmins) {
+    stopAdmins = subscribeAdmins((items) => {
       if (Array.isArray(items) && items.length) {
         state.splice(0, state.length, ...items);
       } else {
@@ -222,7 +198,66 @@ const startAuth = async () => {
     });
   }
 
-    mountApp("auth:authorized");
+  mountApp("auth:authorized");
+};
+
+const startAuth = async () => {
+  flushDebugLog();
+  debugLog("page:load", { path: window.location.pathname });
+  window.addEventListener("pageshow", (event) => {
+    debugLog("page:pageshow", { persisted: event.persisted });
+  });
+  window.addEventListener("pagehide", (event) => {
+    debugLog("page:pagehide", { persisted: event.persisted });
+  });
+  window.addEventListener("visibilitychange", () => {
+    debugLog("page:visibility", { state: document.visibilityState });
+  });
+
+  prepareAuth()
+    .then(({ redirectError, redirectResult }) => {
+      if (redirectError) {
+        toast.error("Sign-in failed after redirect. Try again.");
+      }
+      debugLog("auth:redirectResult", {
+        hasUser: Boolean(redirectResult?.user),
+        email: redirectResult?.user?.email || "",
+      });
+      if (redirectResult?.user) {
+        handleAuthUser(redirectResult.user, "redirectResult");
+      }
+      if (!redirectResult?.user) {
+        const currentUser = getCurrentUser();
+        if (currentUser) {
+          handleAuthUser(currentUser, "currentUser");
+        } else {
+          let attempts = 0;
+          const retry = () => {
+            attempts += 1;
+            const nextUser = getCurrentUser();
+            debugLog("auth:retry", {
+              attempt: attempts,
+              hasUser: Boolean(nextUser),
+            });
+            if (nextUser) {
+              handleAuthUser(nextUser, "currentUser:retry");
+              return;
+            }
+            if (attempts < 8) {
+              window.setTimeout(retry, 500);
+            }
+          };
+          window.setTimeout(retry, 500);
+        }
+      }
+    })
+    .catch((error) => {
+      console.error("Failed to prepare auth", error);
+      toast.error("Sign-in setup failed. Try again.");
+    });
+
+  onAuthChanged((user) => {
+    handleAuthUser(user, "onAuthChanged");
   });
 };
 
