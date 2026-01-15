@@ -7,6 +7,8 @@ import {
   getRedirectResult,
   setPersistence,
   browserLocalPersistence,
+  browserSessionPersistence,
+  indexedDBLocalPersistence,
   signInWithPopup,
   signOut,
 } from "firebase/auth";
@@ -43,15 +45,31 @@ const isIOS = () =>
   typeof navigator !== "undefined" &&
   /iPad|iPhone|iPod/i.test(navigator.userAgent || "");
 
+const setBestPersistence = async () => {
+  const candidates = [
+    { key: "indexedDB", value: indexedDBLocalPersistence },
+    { key: "local", value: browserLocalPersistence },
+    { key: "session", value: browserSessionPersistence },
+  ];
+  let lastError = null;
+
+  for (const candidate of candidates) {
+    try {
+      await setPersistence(auth, candidate.value);
+      return { persistence: candidate.key, error: null };
+    } catch (error) {
+      lastError = error;
+      console.warn(`Failed to set ${candidate.key} persistence`, error);
+    }
+  }
+
+  return { persistence: "none", error: lastError };
+};
+
 const prepareAuth = async () => {
   let redirectError = null;
   let redirectResult = null;
-
-  try {
-    await setPersistence(auth, browserLocalPersistence);
-  } catch (error) {
-    console.warn("Failed to set auth persistence", error);
-  }
+  const persistence = await setBestPersistence();
 
   try {
     redirectResult = await getRedirectResult(auth);
@@ -60,7 +78,7 @@ const prepareAuth = async () => {
     console.error("Firebase redirect sign-in failed", error);
   }
 
-  return { redirectError, redirectResult };
+  return { redirectError, redirectResult, persistence };
 };
 
 const signIn = () =>

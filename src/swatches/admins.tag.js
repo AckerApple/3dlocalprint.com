@@ -215,9 +215,13 @@ const startAuth = async () => {
   });
 
   prepareAuth()
-    .then(({ redirectError, redirectResult }) => {
+    .then(({ redirectError, redirectResult, persistence }) => {
       if (redirectError) {
         toast.error("Sign-in failed after redirect. Try again.");
+      }
+      debugLog("auth:persistence", persistence);
+      if (persistence.error) {
+        toast.error("Safari blocked login storage. Check cookie settings.");
       }
       debugLog("auth:redirectResult", {
         hasUser: Boolean(redirectResult?.user),
