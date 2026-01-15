@@ -82,10 +82,17 @@ const prepareAuth = async () => {
   return { redirectError, redirectResult, persistence };
 };
 
-const signIn = () =>
-  isIOS()
-    ? signInWithRedirect(auth, provider)
-    : signInWithPopup(auth, provider);
+const signIn = async () => {
+  try {
+    return await signInWithPopup(auth, provider);
+  } catch (error) {
+    if (!isIOS()) {
+      throw error;
+    }
+    console.warn("Popup sign-in failed on iOS, falling back to redirect", error);
+    return signInWithRedirect(auth, provider);
+  }
+};
 const signOutUser = () => signOut(auth);
 const onAuthChanged = (callback) => onAuthStateChanged(auth, callback);
 const getCurrentUser = () => auth.currentUser;
