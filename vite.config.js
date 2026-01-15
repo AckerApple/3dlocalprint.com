@@ -5,6 +5,9 @@ export default defineConfig({
   base: "./",
   root: "src",
   publicDir: "../public",
+  server: {
+    allowedHosts: ["ackers-macbook.local"],
+  },
   build: {
     outDir: "../docs",
     emptyOutDir: true,

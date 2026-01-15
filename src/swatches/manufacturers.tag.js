@@ -166,10 +166,16 @@ const mountSso = (status, userEmail, reason = "") => {
 mountSso("loading", "", "initial");
 
 const startAuth = async () => {
-  const { redirectError } = await prepareAuth();
-  if (redirectError) {
-    toast.error("Sign-in failed after redirect. Try again.");
-  }
+  prepareAuth()
+    .then(({ redirectError }) => {
+      if (redirectError) {
+        toast.error("Sign-in failed after redirect. Try again.");
+      }
+    })
+    .catch((error) => {
+      console.error("Failed to prepare auth", error);
+      toast.error("Sign-in setup failed. Try again.");
+    });
 
   onAuthChanged(async (user) => {
     isAuthorized = false;
