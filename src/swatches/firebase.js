@@ -45,6 +45,7 @@ const isIOS = () =>
 
 const prepareAuth = async () => {
   let redirectError = null;
+  let redirectResult = null;
 
   try {
     await setPersistence(auth, browserLocalPersistence);
@@ -53,13 +54,13 @@ const prepareAuth = async () => {
   }
 
   try {
-    await getRedirectResult(auth);
+    redirectResult = await getRedirectResult(auth);
   } catch (error) {
     redirectError = error;
     console.error("Firebase redirect sign-in failed", error);
   }
 
-  return { redirectError };
+  return { redirectError, redirectResult };
 };
 
 const signIn = () =>

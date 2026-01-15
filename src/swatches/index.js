@@ -64,11 +64,65 @@ const mountSso = (status, userEmail, reason = "") => {
 
 mountSso("loading", "", "initial");
 
+const handleAuthUser = async (user, reason = "") => {
+  console.debug("auth changed", { userEmail: user?.email || null, reason });
+  isAuthorized = false;
+  if (!user) {
+    if (stopManufacturers) {
+      stopManufacturers();
+      stopManufacturers = null;
+    }
+    mountSso("login", "", "auth:logged-out");
+    return;
+  }
+
+  let isAllowed = false;
+  try {
+    isAllowed = await isAdminEmail(user.email || "");
+  } catch (error) {
+    console.error("Failed to load admin list", error);
+    toast.error("Unable to verify access. Check Firestore rules.");
+    mountSso("denied", user.email || "", "auth:permissions");
+    return;
+  }
+
+  if (!isAllowed) {
+    if (stopManufacturers) {
+      stopManufacturers();
+      stopManufacturers = null;
+    }
+    toast.error(`Signed in as ${user.email || "unknown"} but not authorized.`);
+    mountSso("denied", user.email || "", "auth:denied");
+    return;
+  }
+
+  isAuthorized = true;
+  if (!stopManufacturers) {
+    stopManufacturers = subscribeManufacturers((items) => {
+      console.debug("manufacturers update", { count: items?.length || 0 });
+      if (Array.isArray(items) && items.length) {
+        manufacturersList = items;
+      } else {
+        manufacturersList = baseManufacturers.map((name) => name);
+      }
+      if (isAuthorized) {
+        mountApp("manufacturers:update");
+        return;
+      }
+    });
+  }
+
+  mountApp("auth:authorized");
+};
+
 const startAuth = async () => {
   prepareAuth()
-    .then(({ redirectError }) => {
+    .then(({ redirectError, redirectResult }) => {
       if (redirectError) {
         toast.error("Sign-in failed after redirect. Try again.");
+      }
+      if (redirectResult?.user) {
+        handleAuthUser(redirectResult.user, "redirectResult");
       }
     })
     .catch((error) => {
@@ -76,55 +130,8 @@ const startAuth = async () => {
       toast.error("Sign-in setup failed. Try again.");
     });
 
-  onAuthChanged(async (user) => {
-    console.debug("auth changed", { userEmail: user?.email || null });
-    isAuthorized = false;
-    if (!user) {
-      if (stopManufacturers) {
-        stopManufacturers();
-        stopManufacturers = null;
-      }
-      mountSso("login", "", "auth:logged-out");
-      return;
-    }
-
-    let isAllowed = false;
-    try {
-      isAllowed = await isAdminEmail(user.email || "");
-    } catch (error) {
-      console.error("Failed to load admin list", error);
-      toast.error("Unable to verify access. Check Firestore rules.");
-      mountSso("denied", user.email || "", "auth:permissions");
-      return;
-    }
-
-    if (!isAllowed) {
-      if (stopManufacturers) {
-        stopManufacturers();
-        stopManufacturers = null;
-      }
-      toast.error(`Signed in as ${user.email || "unknown"} but not authorized.`);
-      mountSso("denied", user.email || "", "auth:denied");
-      return;
-    }
-
-    isAuthorized = true;
-    if (!stopManufacturers) {
-      stopManufacturers = subscribeManufacturers((items) => {
-        console.debug("manufacturers update", { count: items?.length || 0 });
-        if (Array.isArray(items) && items.length) {
-          manufacturersList = items;
-        } else {
-          manufacturersList = baseManufacturers.map((name) => name);
-        }
-        if (isAuthorized) {
-          mountApp("manufacturers:update");
-          return;
-        }
-      });
-    }
-
-    mountApp("auth:authorized");
+  onAuthChanged((user) => {
+    handleAuthUser(user, "onAuthChanged");
   });
 };
 
