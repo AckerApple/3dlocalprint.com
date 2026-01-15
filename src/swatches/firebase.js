@@ -23,7 +23,7 @@ import {
 
 const firebaseConfig = {
   apiKey: "AIzaSyC8oBLWyTpzWLLjWdZxo8YgQ1IcYICxdcU",
-  authDomain: "threedlocalprint.firebaseapp.com",
+  authDomain: "auth.3dlocalprint.com",
   projectId: "threedlocalprint",
   storageBucket: "threedlocalprint.firebasestorage.app",
   messagingSenderId: "770972495364",
