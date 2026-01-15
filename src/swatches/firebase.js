@@ -69,7 +69,6 @@ const setBestPersistence = async () => {
 const prepareAuth = async () => {
   let redirectError = null;
   let redirectResult = null;
-  const persistence = await setBestPersistence();
 
   try {
     redirectResult = await getRedirectResult(auth);
@@ -77,6 +76,8 @@ const prepareAuth = async () => {
     redirectError = error;
     console.error("Firebase redirect sign-in failed", error);
   }
+
+  const persistence = await setBestPersistence();
 
   return { redirectError, redirectResult, persistence };
 };
