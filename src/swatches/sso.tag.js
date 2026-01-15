@@ -23,9 +23,7 @@ export const SsoPanel = tag(
         h2("Access denied"),
         p.class`auth-warning`(
           () => userEmail || "This account",
-          " is not authorized. Sign in with ",
-          span.class`auth-email`(() => adminEmail || "(admin email)"),
-          "."
+          " is not authorized.",
         ),
         div.class`auth-actions`(
           button(

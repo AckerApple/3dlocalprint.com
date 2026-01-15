@@ -92,14 +92,12 @@ const editCard = tag((item, index, toggleRowEdit, manufacturers, onSave, onDupli
     item.qr_search_data = token || text || "";
     showQrScanner = false;
     markDirty();
-    console.log('👉 APPLIED', text)
   };
   const applyBarcodeScan = (text) => {
     const token = extractBarcodeToken(text || "");
     item.barcode_search_data = token || text || "";
     showBarcodeScanner = false;
     markDirty();
-    console.log("👉 BARCODE APPLIED", text);
   };
 
   return div.class`swatch-card`(

@@ -256,6 +256,45 @@ main {
   font-weight: 600;
 }
 
+.toast-root {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  display: grid;
+  gap: 10px;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.toast {
+  min-width: 220px;
+  max-width: 320px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: #fffdf9;
+  color: var(--ink);
+  box-shadow: 0 12px 24px rgba(15, 17, 20, 0.12);
+  font-size: 0.9rem;
+  line-height: 1.35;
+  pointer-events: auto;
+}
+
+.toast-info {
+  border-color: rgba(222, 106, 46, 0.35);
+  background: rgba(255, 245, 234, 0.95);
+}
+
+.toast-success {
+  border-color: rgba(75, 181, 67, 0.4);
+  background: rgba(234, 255, 238, 0.95);
+}
+
+.toast-error {
+  border-color: rgba(214, 69, 69, 0.45);
+  background: rgba(255, 236, 236, 0.96);
+}
+
 .swatch-grid {
   display: grid;
   gap: 20px;

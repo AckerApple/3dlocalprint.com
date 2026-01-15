@@ -33,26 +33,19 @@ const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 const db = getFirestore(app);
 
-export const adminEmails = ["acker.dawn.apple@gmail.com", "fireguy92@gmail.com"];
 const SWATCHES_DOC = doc(db, "swatches", "list");
 const MANUFACTURERS_DOC = doc(db, "manufacturers", "list");
 const ADMINS_DOC = doc(db, "admins", "list");
 
-const isGmailEmail = (email = "") =>
-  /@(gmail\.com|googlemail\.com)$/i.test(email);
-
-const isAdmin = (user) =>
-  Boolean(
-    user &&
-      isGmailEmail(user.email || "") &&
-      adminEmails.includes(user.email || "")
-  );
+const normalizeEmail = (email = "") => email.trim().toLowerCase();
 
 const isIOS = () =>
   typeof navigator !== "undefined" &&
   /iPad|iPhone|iPod/i.test(navigator.userAgent || "");
 
 const prepareAuth = async () => {
+  let redirectError = null;
+
   try {
     await setPersistence(auth, browserLocalPersistence);
   } catch (error) {
@@ -62,8 +55,11 @@ const prepareAuth = async () => {
   try {
     await getRedirectResult(auth);
   } catch (error) {
+    redirectError = error;
     console.error("Firebase redirect sign-in failed", error);
   }
+
+  return { redirectError };
 };
 
 const signIn = () =>
@@ -145,6 +141,20 @@ const saveManufacturers = (items) =>
     { merge: true }
   );
 
+const loadAdmins = async () => {
+  const snapshot = await getDoc(ADMINS_DOC);
+  if (!snapshot.exists()) {
+    return [];
+  }
+  const data = snapshot.data();
+  return Array.isArray(data.items) ? data.items : [];
+};
+
+const isAdminEmail = async (email = "") => {
+  const list = await loadAdmins();
+  return list.map(normalizeEmail).includes(normalizeEmail(email));
+};
+
 const saveAdmins = (items) =>
   setDoc(
     ADMINS_DOC,
@@ -157,7 +167,7 @@ const saveAdmins = (items) =>
 
 export {
   auth,
-  isAdmin,
+  isAdminEmail,
   prepareAuth,
   signIn,
   signOutUser,
@@ -169,4 +179,5 @@ export {
   saveManufacturers,
   subscribeAdmins,
   saveAdmins,
+  loadAdmins,
 };

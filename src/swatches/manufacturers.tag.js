@@ -1,7 +1,6 @@
 import { manufacturers as baseManufacturers } from "./manufacturers.array.js";
 import {
-  adminEmails,
-  isAdmin,
+  isAdminEmail,
   onAuthChanged,
   prepareAuth,
   signIn,
@@ -22,6 +21,7 @@ import {
   a,
   h1,
 } from "taggedjs";
+import { toast } from "./toast.js";
 import { SwatchNav } from "./SwatchNav.tag.js";
 import { mountSsoPanel, replaceMountRoot } from "./ssoMount.js";
 
@@ -29,15 +29,9 @@ let app = document.getElementById("manufacturersApp");
 const appRoot = { current: app };
 const state = baseManufacturers.map((name) => name);
 let newManufacturer = "";
-const adminEmail = adminEmails[0] || "";
 let stopManufacturers = null;
 let isAuthorized = false;
 let appMounted = false;
-
-const formatOutput = () =>
-  `export const manufacturers = [\n${state
-    .map((name) => `  ${JSON.stringify(name)},`)
-    .join("\n")}\n];\n`;
 
 const rerender = () => {
   if (!appRoot.current) return;
@@ -58,17 +52,24 @@ const removeManufacturer = (index) => {
   rerender();
 };
 
-const saveList = () => {
-  saveManufacturers(state.map((name) => name)).catch((error) => {
+const saveList = async () => {
+  if (!isAuthorized) {
+    toast.error("Sign in to save changes.");
+    return;
+  }
+  try {
+    await saveManufacturers(state.map((name) => name));
+    toast.success("Manufacturers saved.");
+  } catch (error) {
     console.error("Failed to save manufacturers", error);
-    alert("Save failed. Check the console for details.");
-  });
+    toast.error("Save failed. Try again.");
+  }
 };
 
 const handleSignOut = () =>
   signOutUser().catch((error) => {
     console.error("Firebase sign-out failed", error);
-    alert("Sign out failed. Check the console for details.");
+    toast.error("Sign out failed. Try again.");
   });
 
 export const ManufacturersApp = tag(() => [
@@ -130,7 +131,7 @@ export const ManufacturersApp = tag(() => [
   ),
 ]);
 
-const mountApp = (reason = "") => {
+const mountApp = () => {
   if (!appRoot.current || appMounted) {
     return;
   }
@@ -148,11 +149,11 @@ const mountSso = (status, userEmail, reason = "") => {
     rootRef: appRoot,
     status,
     userEmail,
-    adminEmail,
+    adminEmail: "",
     onSignIn: () =>
       signIn().catch((error) => {
         console.error("Firebase sign-in failed", error);
-        alert("Sign in failed. Check the console for details.");
+        toast.error("Sign in failed. Try again.");
       }),
     onSignOut: handleSignOut,
     setAppMounted: (value) => {
@@ -163,41 +164,60 @@ const mountSso = (status, userEmail, reason = "") => {
 };
 
 mountSso("loading", "", "initial");
-prepareAuth();
 
-onAuthChanged((user) => {
-  isAuthorized = false;
-  if (!user) {
-    if (stopManufacturers) {
-      stopManufacturers();
-      stopManufacturers = null;
-    }
-    mountSso("login", "", "auth:logged-out");
-    return;
+const startAuth = async () => {
+  const { redirectError } = await prepareAuth();
+  if (redirectError) {
+    toast.error("Sign-in failed after redirect. Try again.");
   }
 
-  if (!isAdmin(user)) {
-    if (stopManufacturers) {
-      stopManufacturers();
-      stopManufacturers = null;
-    }
-    mountSso("denied", user.email || "", "auth:denied");
-    return;
-  }
-
-  isAuthorized = true;
-  if (!stopManufacturers) {
-    stopManufacturers = subscribeManufacturers((items) => {
-      if (Array.isArray(items) && items.length) {
-        state.splice(0, state.length, ...items);
-      } else {
-        state.splice(0, state.length, ...baseManufacturers);
+  onAuthChanged(async (user) => {
+    isAuthorized = false;
+    if (!user) {
+      if (stopManufacturers) {
+        stopManufacturers();
+        stopManufacturers = null;
       }
-      if (isAuthorized) {
-        mountApp("manufacturers:update");
-      }
-    });
-  }
+      mountSso("login", "", "auth:logged-out");
+      return;
+    }
 
-  mountApp("auth:authorized");
-});
+    let isAllowed = false;
+    try {
+      isAllowed = await isAdminEmail(user.email || "");
+    } catch (error) {
+      console.error("Failed to load admin list", error);
+      toast.error("Unable to verify access. Check Firestore rules.");
+      mountSso("denied", user.email || "", "auth:permissions");
+      return;
+    }
+
+    if (!isAllowed) {
+      if (stopManufacturers) {
+        stopManufacturers();
+        stopManufacturers = null;
+      }
+      toast.error(`Signed in as ${user.email || "unknown"} but not authorized.`);
+      mountSso("denied", user.email || "", "auth:denied");
+      return;
+    }
+
+    isAuthorized = true;
+    if (!stopManufacturers) {
+      stopManufacturers = subscribeManufacturers((items) => {
+        if (Array.isArray(items) && items.length) {
+          state.splice(0, state.length, ...items);
+        } else {
+          state.splice(0, state.length, ...baseManufacturers);
+        }
+        if (isAuthorized) {
+          mountApp("manufacturers:update");
+        }
+      });
+    }
+
+    mountApp("auth:authorized");
+  });
+};
+
+startAuth();
