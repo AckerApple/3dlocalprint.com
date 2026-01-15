@@ -28,11 +28,13 @@ export const SwatchApp = tag(
   (
     manufacturers,
     onSignOut,
+    user,
   ) => {
     SwatchApp.updates((args) => {
       [
         manufacturers,
         onSignOut,
+        user,
       ] = args;
     });
 
@@ -134,7 +136,7 @@ export const SwatchApp = tag(
 
     return [
       header(
-        SwatchNav(onSignOut),
+        SwatchNav(onSignOut, user),
         h1("Swatch Editor"),
         p(
           "Edit swatches in place. Changes are saved directly to Firestore."

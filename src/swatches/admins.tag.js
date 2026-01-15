@@ -1,9 +1,8 @@
-import { isAdminEmail, onAuthChanged, prepareAuth, signIn, signOutUser, saveAdmins, subscribeAdmins, getCurrentUser } from "./firebase.js";
+import { isAdminEmail, onAuthChanged, prepareAuth, signIn, signOutUser, saveAdmins, subscribeAdmins } from "./firebase.js";
 import { tag, tagElement, section, div, input, button, p, a, h1 } from "taggedjs";
 import { SwatchNav } from "./SwatchNav.tag.js";
 import { mountSsoPanel, replaceMountRoot } from "./ssoMount.js";
 import { toast } from "./toast.js";
-import { debugLog, flushDebugLog, debugPause } from "./debug.js";
 
 let app = document.getElementById("adminsApp");
 const appRoot = { current: app };
@@ -12,6 +11,7 @@ let newAdminEmail = "";
 let stopAdmins = null;
 let isAuthorized = false;
 let appMounted = false;
+let currentUser = null;
 
 const rerender = () => {
   if (!appRoot.current) return;
@@ -62,7 +62,7 @@ const handleSignOut = () =>
   });
 
 export const AdminsApp = tag(() => [
-  SwatchNav(handleSignOut),
+  SwatchNav(handleSignOut, currentUser),
   section.class`panel manufacturers-panel`(
     h1("Manage Admins"),
     p("Update the list of emails allowed to access the swatch tools."),
@@ -113,7 +113,6 @@ export const AdminsApp = tag(() => [
 ]);
 
 const mountApp = () => {
-  debugLog("mountApp", { reason: "admins" });
   if (!appRoot.current || appMounted) {
     return;
   }
@@ -127,7 +126,6 @@ const mountApp = () => {
 };
 
 const mountSso = (status, userEmail, reason = "") => {
-  debugLog("mountSso", { status, userEmail, reason });
   mountSsoPanel({
     rootRef: appRoot,
     status,
@@ -149,9 +147,9 @@ const mountSso = (status, userEmail, reason = "") => {
 mountSso("loading", "", "initial");
 
 const handleAuthUser = async (user, reason = "") => {
-  debugLog("auth:changed", { userEmail: user?.email || null, reason });
   isAuthorized = false;
   if (!user) {
+    currentUser = null;
     if (stopAdmins) {
       stopAdmins();
       stopAdmins = null;
@@ -159,6 +157,11 @@ const handleAuthUser = async (user, reason = "") => {
     mountSso("login", "", "auth:logged-out");
     return;
   }
+
+  currentUser = {
+    email: user.email || "",
+    photoURL: user.photoURL || "",
+  };
 
   let isAllowed = false;
   try {
@@ -202,59 +205,16 @@ const handleAuthUser = async (user, reason = "") => {
 };
 
 const startAuth = async () => {
-  flushDebugLog();
-  debugLog("page:load", { path: window.location.pathname });
-  window.addEventListener("pageshow", (event) => {
-    debugLog("page:pageshow", { persisted: event.persisted });
-  });
-  window.addEventListener("pagehide", (event) => {
-    debugLog("page:pagehide", { persisted: event.persisted });
-  });
-  window.addEventListener("visibilitychange", () => {
-    debugLog("page:visibility", { state: document.visibilityState });
-  });
-
   prepareAuth()
     .then(({ redirectError, redirectResult, persistence }) => {
       if (redirectError) {
         toast.error("Sign-in failed after redirect. Try again.");
       }
-      debugLog("auth:persistence", persistence);
       if (persistence.error) {
         toast.error("Safari blocked login storage. Check cookie settings.");
       }
-      debugPause("after prepareAuth");
-      debugLog("auth:redirectResult", {
-        hasUser: Boolean(redirectResult?.user),
-        email: redirectResult?.user?.email || "",
-      });
-      debugPause("after redirectResult");
       if (redirectResult?.user) {
         handleAuthUser(redirectResult.user, "redirectResult");
-      }
-      if (!redirectResult?.user) {
-        const currentUser = getCurrentUser();
-        if (currentUser) {
-          handleAuthUser(currentUser, "currentUser");
-        } else {
-          let attempts = 0;
-          const retry = () => {
-            attempts += 1;
-            const nextUser = getCurrentUser();
-            debugLog("auth:retry", {
-              attempt: attempts,
-              hasUser: Boolean(nextUser),
-            });
-            if (nextUser) {
-              handleAuthUser(nextUser, "currentUser:retry");
-              return;
-            }
-            if (attempts < 8) {
-              window.setTimeout(retry, 500);
-            }
-          };
-          window.setTimeout(retry, 500);
-        }
       }
     })
     .catch((error) => {
@@ -264,7 +224,6 @@ const startAuth = async () => {
 
   onAuthChanged((user) => {
     handleAuthUser(user, "onAuthChanged");
-    debugPause("after onAuthChanged");
   });
 };
 

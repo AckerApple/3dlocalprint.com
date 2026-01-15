@@ -95,7 +95,6 @@ const signIn = async () => {
 };
 const signOutUser = () => signOut(auth);
 const onAuthChanged = (callback) => onAuthStateChanged(auth, callback);
-const getCurrentUser = () => auth.currentUser;
 
 const loadSwatches = async () => {
   const snapshot = await getDoc(SWATCHES_DOC);
@@ -200,7 +199,6 @@ export {
   signIn,
   signOutUser,
   onAuthChanged,
-  getCurrentUser,
   loadSwatches,
   saveSwatches,
   loadManufacturers,

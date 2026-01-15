@@ -170,11 +170,60 @@ main {
   padding: 24px;
 }
 
+.menu-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: stretch;
+  margin-bottom: 16px;
+}
+
 .menu-actions {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 16px;
+}
+
+.user-badge {
+  align-self: flex-end;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #fffdf9;
+  color: var(--muted);
+  font-size: 0.8rem;
+  min-width: 0;
+}
+
+.user-avatar-image {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  object-fit: cover;
+}
+
+.user-avatar-fallback {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(222, 106, 46, 0.15);
+  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.user-email {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 220px;
 }
 
 .menu-button {
