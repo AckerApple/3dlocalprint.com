@@ -11,6 +11,7 @@ import {
 } from "./firebase.js";
 import { tag, tagElement } from "taggedjs";
 import { toast } from "./toast.js";
+import { debugLog, flushDebugLog } from "./debug.js";
 
 const swatchRoot = { current: document.getElementById("swatchApp") };
 let manufacturersList = baseManufacturers.map((name) => name);
@@ -32,6 +33,7 @@ const App = tag(() =>
 );
 
 const mountApp = (reason = "") => {
+  debugLog("mountApp", { reason });
   if (!swatchRoot.current || appMounted) {
     return;
   }
@@ -44,17 +46,19 @@ const mountApp = (reason = "") => {
 };
 
 const mountSso = (status, userEmail, reason = "") => {
-  console.debug("mountSso", { status, userEmail, reason });
+  debugLog("mountSso", { status, userEmail, reason });
   mountSsoPanel({
     rootRef: swatchRoot,
     status,
     userEmail,
     adminEmail: "",
-    onSignIn: () =>
-      signIn().catch((error) => {
+    onSignIn: () => {
+      debugLog("signIn:click");
+      return signIn().catch((error) => {
         console.error("Firebase sign-in failed", error);
         toast.error("Sign in failed. Try again.");
-      }),
+      });
+    },
     onSignOut: handleSignOut,
     setAppMounted: (value) => {
       appMounted = value;
@@ -65,7 +69,7 @@ const mountSso = (status, userEmail, reason = "") => {
 mountSso("loading", "", "initial");
 
 const handleAuthUser = async (user, reason = "") => {
-  console.debug("auth changed", { userEmail: user?.email || null, reason });
+  debugLog("auth:changed", { userEmail: user?.email || null, reason });
   isAuthorized = false;
   if (!user) {
     if (stopManufacturers) {
@@ -116,11 +120,27 @@ const handleAuthUser = async (user, reason = "") => {
 };
 
 const startAuth = async () => {
+  flushDebugLog();
+  debugLog("page:load", { path: window.location.pathname });
+  window.addEventListener("pageshow", (event) => {
+    debugLog("page:pageshow", { persisted: event.persisted });
+  });
+  window.addEventListener("pagehide", (event) => {
+    debugLog("page:pagehide", { persisted: event.persisted });
+  });
+  window.addEventListener("visibilitychange", () => {
+    debugLog("page:visibility", { state: document.visibilityState });
+  });
+
   prepareAuth()
     .then(({ redirectError, redirectResult }) => {
       if (redirectError) {
         toast.error("Sign-in failed after redirect. Try again.");
       }
+      debugLog("auth:redirectResult", {
+        hasUser: Boolean(redirectResult?.user),
+        email: redirectResult?.user?.email || "",
+      });
       if (redirectResult?.user) {
         handleAuthUser(redirectResult.user, "redirectResult");
       }

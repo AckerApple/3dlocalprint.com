@@ -3,6 +3,7 @@ import { tag, tagElement, section, div, input, button, p, a, h1 } from "taggedjs
 import { SwatchNav } from "./SwatchNav.tag.js";
 import { mountSsoPanel, replaceMountRoot } from "./ssoMount.js";
 import { toast } from "./toast.js";
+import { debugLog, flushDebugLog } from "./debug.js";
 
 let app = document.getElementById("adminsApp");
 const appRoot = { current: app };
@@ -112,6 +113,7 @@ export const AdminsApp = tag(() => [
 ]);
 
 const mountApp = () => {
+  debugLog("mountApp", { reason: "admins" });
   if (!appRoot.current || appMounted) {
     return;
   }
@@ -125,8 +127,7 @@ const mountApp = () => {
 };
 
 const mountSso = (status, userEmail, reason = "") => {
-  console.debug("admins mountSso run", { status, userEmail, reason });
-  console.trace("admins mountSso trace");
+  debugLog("mountSso", { status, userEmail, reason });
   mountSsoPanel({
     rootRef: appRoot,
     status,
@@ -148,6 +149,18 @@ const mountSso = (status, userEmail, reason = "") => {
 mountSso("loading", "", "initial");
 
 const startAuth = async () => {
+  flushDebugLog();
+  debugLog("page:load", { path: window.location.pathname });
+  window.addEventListener("pageshow", (event) => {
+    debugLog("page:pageshow", { persisted: event.persisted });
+  });
+  window.addEventListener("pagehide", (event) => {
+    debugLog("page:pagehide", { persisted: event.persisted });
+  });
+  window.addEventListener("visibilitychange", () => {
+    debugLog("page:visibility", { state: document.visibilityState });
+  });
+
   prepareAuth()
     .then(({ redirectError }) => {
       if (redirectError) {
@@ -160,6 +173,7 @@ const startAuth = async () => {
     });
 
   onAuthChanged(async (user) => {
+    debugLog("auth:changed", { userEmail: user?.email || null, reason: "onAuthChanged" });
     isAuthorized = false;
     if (!user) {
       if (stopAdmins) {

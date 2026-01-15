@@ -24,6 +24,7 @@ import {
 import { toast } from "./toast.js";
 import { SwatchNav } from "./SwatchNav.tag.js";
 import { mountSsoPanel, replaceMountRoot } from "./ssoMount.js";
+import { debugLog, flushDebugLog } from "./debug.js";
 
 let app = document.getElementById("manufacturersApp");
 const appRoot = { current: app };
@@ -132,6 +133,7 @@ export const ManufacturersApp = tag(() => [
 ]);
 
 const mountApp = () => {
+  debugLog("mountApp", { reason: "manufacturers" });
   if (!appRoot.current || appMounted) {
     return;
   }
@@ -144,6 +146,7 @@ const mountApp = () => {
 };
 
 const mountSso = (status, userEmail, reason = "") => {
+  debugLog("mountSso", { status, userEmail, reason });
   if (!appRoot.current) return;
   mountSsoPanel({
     rootRef: appRoot,
@@ -166,6 +169,7 @@ const mountSso = (status, userEmail, reason = "") => {
 mountSso("loading", "", "initial");
 
 const handleAuthUser = async (user, reason = "") => {
+  debugLog("auth:changed", { userEmail: user?.email || null, reason });
   isAuthorized = false;
   if (!user) {
     if (stopManufacturers) {
@@ -214,6 +218,18 @@ const handleAuthUser = async (user, reason = "") => {
 };
 
 const startAuth = async () => {
+  flushDebugLog();
+  debugLog("page:load", { path: window.location.pathname });
+  window.addEventListener("pageshow", (event) => {
+    debugLog("page:pageshow", { persisted: event.persisted });
+  });
+  window.addEventListener("pagehide", (event) => {
+    debugLog("page:pagehide", { persisted: event.persisted });
+  });
+  window.addEventListener("visibilitychange", () => {
+    debugLog("page:visibility", { state: document.visibilityState });
+  });
+
   prepareAuth()
     .then(({ redirectError, redirectResult }) => {
       if (redirectError) {
