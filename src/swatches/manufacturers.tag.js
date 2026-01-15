@@ -25,7 +25,7 @@ import {
 import { toast } from "./toast.js";
 import { SwatchNav } from "./SwatchNav.tag.js";
 import { mountSsoPanel, replaceMountRoot } from "./ssoMount.js";
-import { debugLog, flushDebugLog } from "./debug.js";
+import { debugLog, flushDebugLog, debugPause } from "./debug.js";
 
 let app = document.getElementById("manufacturersApp");
 const appRoot = { current: app };
@@ -240,10 +240,12 @@ const startAuth = async () => {
       if (persistence.error) {
         toast.error("Safari blocked login storage. Check cookie settings.");
       }
+      debugPause("after prepareAuth");
       debugLog("auth:redirectResult", {
         hasUser: Boolean(redirectResult?.user),
         email: redirectResult?.user?.email || "",
       });
+      debugPause("after redirectResult");
       if (redirectResult?.user) {
         handleAuthUser(redirectResult.user, "redirectResult");
       }
@@ -279,6 +281,7 @@ const startAuth = async () => {
 
   onAuthChanged((user) => {
     handleAuthUser(user, "onAuthChanged");
+    debugPause("after onAuthChanged");
   });
 };
 

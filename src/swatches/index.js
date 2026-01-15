@@ -12,7 +12,7 @@ import {
 } from "./firebase.js";
 import { tag, tagElement } from "taggedjs";
 import { toast } from "./toast.js";
-import { debugLog, flushDebugLog } from "./debug.js";
+import { debugLog, flushDebugLog, debugPause } from "./debug.js";
 
 const swatchRoot = { current: document.getElementById("swatchApp") };
 let manufacturersList = baseManufacturers.map((name) => name);
@@ -142,10 +142,12 @@ const startAuth = async () => {
       if (persistence.error) {
         toast.error("Safari blocked login storage. Check cookie settings.");
       }
+      debugPause("after prepareAuth");
       debugLog("auth:redirectResult", {
         hasUser: Boolean(redirectResult?.user),
         email: redirectResult?.user?.email || "",
       });
+      debugPause("after redirectResult");
       if (redirectResult?.user) {
         handleAuthUser(redirectResult.user, "redirectResult");
       }
@@ -181,6 +183,7 @@ const startAuth = async () => {
 
   onAuthChanged((user) => {
     handleAuthUser(user, "onAuthChanged");
+    debugPause("after onAuthChanged");
   });
 };
 
