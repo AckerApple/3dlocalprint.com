@@ -296,12 +296,28 @@ const editCard = tag((item, index, toggleRowEdit, manufacturers, onSave, onDupli
   );
 });
 
-const summaryRow = tag((item, index, toggleRowEdit) => {
+const summaryRow = tag((item, index, toggleRowEdit, onSave) => {
   summaryRow.updates((args) => {
-    [item, index, toggleRowEdit] = args;
+    [item, index, toggleRowEdit, onSave] = args;
     // toggleRowEdit = output(toggleRowEdit);
   });
   toggleRowEdit = output(toggleRowEdit);
+  const adjustSpoolCount = (event, delta) => {
+    const current = Number(item.spool_inventory);
+    const nextValue = Math.max(0, (Number.isFinite(current) ? current : 0) + delta);
+    item.spool_inventory = nextValue;
+    if (event?.currentTarget) {
+      const target = event.currentTarget;
+      target.classList.add("is-clicked");
+      window.setTimeout(() => target.classList.remove("is-clicked"), 220);
+    }
+    if (onSave) {
+      const result = onSave();
+      if (result && typeof result.then === "function") {
+        result.catch(() => {});
+      }
+    }
+  };
   return div.class`summary-row`(
     div(_=> item.number || "-"),
     div.class`summary-swatch`(
@@ -335,15 +351,33 @@ const summaryRow = tag((item, index, toggleRowEdit) => {
             span.class`summary-meta-item`("Maker: N/A")
           );
         }
-        if (item.spool_inventory !== undefined && item.spool_inventory !== "") {
-          parts.push(
-            span.class`summary-meta-item`(`Spools: ${item.spool_inventory}`)
-          );
-        } else {
-          parts.push(
-            span.class`summary-meta-item`("Spools: N/A")
-          );
-        }
+        parts.push(
+          span.class`summary-meta-item summary-spool-meta`(
+            span.class`summary-spool-label`("Spools:"),
+            span.class`summary-spool-count`(
+              _=> {
+                const spoolValue = Number(item.spool_inventory);
+                return Number.isFinite(spoolValue) ? spoolValue : 0;
+              }
+            ),
+            div.class`summary-spool-controls`(
+              button
+                .type`button`
+                .class`spool-adjust-button`
+                .attr("aria-label", "Decrease spool count")
+                .onClick((event) => adjustSpoolCount(event, -1))(
+                "−"
+              ),
+              button
+                .type`button`
+                .class`spool-adjust-button`
+                .attr("aria-label", "Increase spool count")
+                .onClick((event) => adjustSpoolCount(event, 1))(
+                "+"
+              )
+            )
+          )
+        );
         if (item.url) {
           const domainLabel = getDomainLabel(item.url);
           parts.push(
@@ -384,7 +418,7 @@ export const SwatchRow = tag(
     return noElement(
       _=> (activeEditIndex === index)
         ? editCard(item, index, toggleRowEdit, manufacturers, onSave, onDuplicate)
-        : summaryRow(item, index, toggleRowEdit)
+        : summaryRow(item, index, toggleRowEdit, onSave)
     );
   }
 );
