@@ -5,9 +5,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "build:html": "node scripts/build-html.js",
+    "dev": "npm run build:html && vite",
     "bump": "npm version patch --no-git-tag-version",
-    "build": "vite build",
+    "build": "npm run build:html && vite build",
     "preview": "vite preview",
     "deploy": "npm run bump && npm run build && git add . && git commit -m \"deploy\" && git push"
   },

@@ -1,6 +1,8 @@
 import { defineConfig } from "vite";
 import { resolve } from "path";
 import { readFileSync } from "fs";
+import { locations } from "./src/filament/locations.array.js";
+import { slugifyLocation } from "./src/filament/location-utils.js";
 
 const pkg = JSON.parse(
   readFileSync(new URL("./package.json", import.meta.url), "utf-8")
@@ -22,8 +24,20 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, "src/index.html"),
-        swatches: resolve(__dirname, "src/swatches/index.html"),
-        manufacturers: resolve(__dirname, "src/swatches/manufacturers.html"),
+        filament: resolve(__dirname, "src/filament/index.html"),
+        admin: resolve(__dirname, "src/filament/admin.html"),
+        filamentTypes: resolve(__dirname, "src/filament/filament-types.html"),
+        manufacturers: resolve(__dirname, "src/filament/manufacturers.html"),
+        admins: resolve(__dirname, "src/filament/admins.html"),
+        ...Object.fromEntries(
+          locations.map((location) => {
+            const slug = slugifyLocation(location);
+            return [
+              `fast-edit-${slug}`,
+              resolve(__dirname, `src/filament/${slug}/fast-edit.html`),
+            ];
+          })
+        ),
       },
     },
   },
