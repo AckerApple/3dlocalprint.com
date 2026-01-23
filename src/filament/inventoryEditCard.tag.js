@@ -2,6 +2,7 @@ import {
   tag,
   div,
   button,
+  a,
   label,
   input,
   select,
@@ -42,7 +43,6 @@ export const inventoryEditCard = tag(
         onLocationChange,
       ] = args;
       toggleRowEdit = output(toggleRowEdit);
-      console.log('filamentTypes ->',{filamentTypes})
     });
     toggleRowEdit = output(toggleRowEdit);
     let isDirty = false;
@@ -85,6 +85,11 @@ export const inventoryEditCard = tag(
       markDirty();
     };
 
+    const editFilamentHref = () => {
+      if (!item?.filament_type_id) return "./filament-types.html";
+      return `./filament-types.html?edit=${encodeURIComponent(item.filament_type_id)}`;
+    };
+
     return div.class`swatch-card`(
       div.class`edit-card-header`(
         span.class`edit-card-title`(
@@ -93,32 +98,6 @@ export const inventoryEditCard = tag(
               type.filament_type_id === item.filament_type_id
             )
           ) || "Filament inventory"
-        ),
-        div.class`edit-card-actions`(
-          onSave
-            ? button
-                .type`button`
-                .class`add-button`
-                .disabled(_=> !isDirty)
-                .onClick(triggerSave)(
-                "💾 Save"
-              )
-            : null,
-          onDuplicate
-            ? button
-                .type`button`
-                .class`ghost-button`
-                .onClick(triggerDuplicate)(
-                "🧬 Duplicate"
-              )
-            : null,
-          button
-            .type`button`
-            .class`edit-card-toggle`
-            .onClick(() => toggleRowEdit(index, item?.location ?? ""))
-            .attr("aria-label", "Stop editing inventory")(
-            "Done"
-          )
         )
       ),
       div
@@ -173,6 +152,37 @@ export const inventoryEditCard = tag(
             .value(_=> item.spool_inventory ?? "")
             .onChange(numberHandler(item, "spool_inventory").onChange)
             .onKeyup(numberHandler(item, "spool_inventory").onKeyup)()
+        )
+      ),
+      div.class`edit-card-footer`(
+        onSave
+          ? button
+              .type`button`
+              .class`add-button`
+              .disabled(_=> !isDirty)
+              .onClick(triggerSave)(
+              "💾 Save"
+            )
+          : null,
+        onDuplicate
+          ? button
+              .type`button`
+              .class`ghost-button`
+              .onClick(triggerDuplicate)(
+              "🧬 Duplicate"
+            )
+          : null,
+        a
+          .class`ghost-button`
+          .href(_=> editFilamentHref())(
+          "✏️ Edit filament"
+        ),
+        button
+          .type`button`
+          .class`ghost-button`
+          .onClick(() => toggleRowEdit(index, item?.location ?? ""))
+          .attr("aria-label", "Stop editing inventory")(
+          "Done"
         )
       )
     );

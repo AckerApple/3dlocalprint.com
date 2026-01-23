@@ -207,6 +207,23 @@ main {
   margin-left: auto;
 }
 
+.filament-type-color {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.filament-type-group {
+  display: grid;
+  gap: 12px;
+}
+
+.filament-type-group-title {
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
 .admin-home {
   display: grid;
   gap: 24px;
@@ -1159,6 +1176,14 @@ input:focus {
   display: inline-flex;
   align-items: center;
   gap: 10px;
+}
+
+.edit-card-footer {
+  display: flex;
+  justify-content: space-evenly;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 12px;
 }
 
 .edit-card-title {
