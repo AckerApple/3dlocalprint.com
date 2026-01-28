@@ -2,7 +2,7 @@ const digitMatch = /\d+/g;
 
 export const normalizeBarcodeList = (value) => {
   if (Array.isArray(value)) {
-    return value.map((item) => String(item).trim()).filter(Boolean);
+    return value.map((item) => String(item).trim()) // .filter(Boolean); // new entries are empty string
   }
   if (value === undefined || value === null || value === "") return [];
   return [String(value).trim()].filter(Boolean);

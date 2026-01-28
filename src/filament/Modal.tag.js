@@ -8,11 +8,10 @@ import {
 } from "taggedjs";
 
 export const Modal = tag(({ title, onClose, content }) => {
-  Modal.updates((args) => {
+  Modal.inputs((args) => {
     [{ title, onClose, content }] = args;
     onClose = output(onClose);
   });
-  onClose = output(onClose);
   const dialogId = `qr-modal-${Math.random().toString(36).slice(2, 9)}`;
 
   const closeDialog = () => {

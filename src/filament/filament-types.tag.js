@@ -91,7 +91,6 @@ const addType = () => {
   if (next.filament_type_id) {
     expandedTypeIds.add(next.filament_type_id);
   }
-  rerender();
 };
 
 const removeType = (index) => {
@@ -100,7 +99,6 @@ const removeType = (index) => {
   const id = types[index]?.filament_type_id;
   if (id) expandedTypeIds.delete(id);
   types.splice(index, 1);
-  rerender();
 };
 
 const saveList = async () => {
@@ -136,25 +134,20 @@ const addBarcode = (item) => {
   const next = getBarcodeList(item);
   next.push("");
   item.barcode_search_data = next;
-  // rerender();
-  console.log('bar code added', item)
 };
 
 const removeBarcode = (item, index) => {
   const next = getBarcodeList(item);
   next.splice(index, 1);
   item.barcode_search_data = next;
-  rerender();
 };
 
 const openQrScanner = (item) => {
   activeQrItem = item;
-  rerender();
 };
 
 const openBarcodeScanner = (item) => {
   activeBarcodeItem = item;
-  rerender();
 };
 
 const applyQrScan = (text) => {
@@ -162,7 +155,6 @@ const applyQrScan = (text) => {
   const token = extractQrToken(text || "");
   activeQrItem.qr_search_data = token || text || "";
   activeQrItem = null;
-  rerender();
 };
 
 const applyBarcodeScan = (text) => {
@@ -176,7 +168,6 @@ const applyBarcodeScan = (text) => {
   }
   activeBarcodeItem.barcode_search_data = next;
   activeBarcodeItem = null;
-  rerender();
 };
 
 const filteredTypes = () =>
@@ -207,7 +198,6 @@ const toggleExpanded = (item) => {
   } else {
     expandedTypeIds.add(id);
   }
-  rerender();
 };
 
 const isExpanded = (item) => {
@@ -243,7 +233,7 @@ export const FilamentTypesApp = tag(() => [
               manufacturerFilter = event?.target?.value || "";
             })(
             option({ value: "" }, "🏭 Filter by manufacturer"),
-            ...(manufacturers || []).map((maker) =>
+            _=> (manufacturers || []).map((maker) =>
               option({ value: maker }, maker)
             )
           ),
@@ -253,7 +243,7 @@ export const FilamentTypesApp = tag(() => [
               materialTypeFilter = event?.target?.value || "";
             })(
             option({ value: "" }, "Filter by material type"),
-            ...materialTypes.map((materialType) =>
+            _=> materialTypes.map((materialType) =>
               option({ value: materialType }, materialType)
             )
           ),
@@ -262,12 +252,12 @@ export const FilamentTypesApp = tag(() => [
       )
     ),
     div.class`swatch-grid`(
-      ...groupTypesByManufacturer(filteredTypes()).map(([maker, items]) =>
+      _=> groupTypesByManufacturer(filteredTypes()).map(([maker, items]) =>
         div.class`filament-type-group`(
           strong.class`filament-type-group-title`(
             maker === "Unknown" ? "🏭 Unknown" : `🏭 ${maker}`
           ),
-          ...items.map((item, index) =>
+          _=> items.map((item, index) =>
             div.class`swatch-card`(
               div.class`filament-type-header`(
                 div
@@ -322,7 +312,7 @@ export const FilamentTypesApp = tag(() => [
                         .selected(_=> !item.manufacturer)(
                         withManufacturerEmoji("Select manufacturer")
                       ),
-                      ...(manufacturers || []).map((maker) =>
+                      _=> (manufacturers || []).map((maker) =>
                         option
                           .value(maker)
                           .selected(_=> item.manufacturer === maker)(maker)
@@ -339,7 +329,7 @@ export const FilamentTypesApp = tag(() => [
                       option
                         .value``
                         .selected(_=> !item.material_type)("Select material"),
-                      ...materialTypes.map((materialType) =>
+                      _=> materialTypes.map((materialType) =>
                         option
                           .value(materialType)
                           .selected(_=> item.material_type === materialType)(materialType)
@@ -390,7 +380,9 @@ export const FilamentTypesApp = tag(() => [
                   label(
                     "Bar Codes",
                     div.class`barcode-inputs`(
-                      _=> getBarcodeList(item).map((barcode, barcodeIndex) =>
+                      _=> {
+                        const is = getBarcodeList(item)
+                        return is.map((barcode, barcodeIndex) =>
                         div.class`barcode-entry`(
                           input
                             .class`qr-edit-input`
@@ -403,7 +395,7 @@ export const FilamentTypesApp = tag(() => [
                             "−"
                           )
                         ).key(`${item.filament_type_id}-${barcodeIndex}`)
-                      ),
+                      )},
                       div.class`barcode-actions`(
                         button
                           .type`button`
@@ -443,6 +435,7 @@ export const FilamentTypesApp = tag(() => [
     ),
     _=> activeQrItem &&
       CodeScannerModal({
+        name: 'qr-scanner-',
         title: "Scan QR",
         onClose: () => {
           activeQrItem = null;
@@ -452,6 +445,7 @@ export const FilamentTypesApp = tag(() => [
       }),
     _=> activeBarcodeItem &&
       CodeScannerModal({
+        name: 'bc-scanner-',
         title: "Scan barcode",
         onClose: () => {
           activeBarcodeItem = null;

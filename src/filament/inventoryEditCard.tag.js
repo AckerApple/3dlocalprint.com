@@ -32,7 +32,7 @@ export const inventoryEditCard = tag(
     onDuplicate,
     onLocationChange
   ) => {
-    inventoryEditCard.updates((args) => {
+    inventoryEditCard.inputs((args) => {
       [
         item,
         index,
@@ -42,9 +42,11 @@ export const inventoryEditCard = tag(
         onDuplicate,
         onLocationChange,
       ] = args;
-      toggleRowEdit = output(toggleRowEdit);
+      toggleRowEdit = output(toggleRowEdit)
+      onSave = output(onSave)
+      onDuplicate = output(onDuplicate)
+      onLocationChange = output(onLocationChange)
     });
-    toggleRowEdit = output(toggleRowEdit);
     let isDirty = false;
 
     const markDirty = () => {

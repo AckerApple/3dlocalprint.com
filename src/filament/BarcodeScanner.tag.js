@@ -1,12 +1,11 @@
 import {
   tag,
-  callback,
   div,
   pre,
   span,
-  output,
   onDestroy,
   htmlTag,
+  output,
 } from "taggedjs";
 
 const video = htmlTag("video");
@@ -14,9 +13,9 @@ const video = htmlTag("video");
 export const BarcodeScannerPanel = tag(({ onResult, formats }) => {
   BarcodeScannerPanel.updates((args) => {
     [{ onResult, formats }] = args;
-    onResult = output(onResult);
+    onResult = output( onResult || (() => undefined));
   });
-  onResult = output(onResult);
+  onResult = output( onResult || (() => undefined));
 
   const activeFormats =
     Array.isArray(formats) && formats.length
@@ -64,9 +63,13 @@ export const BarcodeScannerPanel = tag(({ onResult, formats }) => {
     setStatus("Camera stopped.");
   };
 
-  const onDetected = callback((value) => {
-    onResult(value);
-  });
+  const onDetected = (value) => {
+    try {
+      onResult(value);
+    } catch (error) {
+      console.error("[barcode] onResult failed", error);
+    }
+  };
 
   const scanLoop = async (preview) => {
     if (!detector || !stream) {
@@ -90,6 +93,8 @@ export const BarcodeScannerPanel = tag(({ onResult, formats }) => {
         }
       }
     } catch (error) {
+      const stack = new Error("Barcode scan loop error").stack;
+      console.error("[barcode] scan loop stack trace", stack);
       setStatus(`Scan error: ${error.message || error}`);
     }
 

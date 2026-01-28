@@ -8,33 +8,30 @@ export const InventoryRow = tag(
     item,
     type,
     index,
-    editingTarget,
+    isEditMode,
     toggleRowEdit,
     filamentTypes,
     onSave,
     onDuplicate
   ) => {
-    InventoryRow.updates((args) => {
+    InventoryRow.inputs((args) => {
       [
         item,
         type,
         index,
-        editingTarget,
+        isEditMode,
         toggleRowEdit,
         filamentTypes,
         onSave,
         onDuplicate,
       ] = args;
-      toggleRowEdit = output(toggleRowEdit);
+      toggleRowEdit = output(toggleRowEdit)
+      onSave = output(onSave)
+      onDuplicate = output(onDuplicate)
     });
 
-    toggleRowEdit = output(toggleRowEdit);
-    const isEditing = () =>
-      editingTarget?.index === index &&
-      (editingTarget?.location ?? "") === (item?.location ?? "");
-
     return noElement(
-      _=> isEditing()
+      _=> isEditMode
         ? inventoryEditCard(
             item,
             index,

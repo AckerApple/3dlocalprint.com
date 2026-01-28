@@ -55,7 +55,11 @@ export const FilamentInventoryApp = tag(
       setEditingIndex(0, data[0]?.location || "");
     };
 
-    const saveCurrentFilaments = () => saveFilamentInventoryToFirestore(data);
+    const saveCurrentFilaments = () => {
+      return tag.promise = saveFilamentInventoryToFirestore(data).then(() => {
+        delete editingTarget.index
+      })
+    };
 
     const duplicateFilamentAt = (index) => {
       const source = data[index];
@@ -145,6 +149,7 @@ export const FilamentInventoryApp = tag(
 
       main(
         section.class`panel`(
+          _=> `editIndex:${editingTarget?.index}:`,
           div.class`meta`(
             div.class`controls`(
               div.class`controls-group`(
@@ -212,7 +217,7 @@ export const FilamentInventoryApp = tag(
                       item,
                       type,
                       index,
-                      editingTarget,
+                      editingTarget?.index === index, // isEditMode
                       toggleRowEdit,
                       filamentTypes,
                       saveCurrentFilaments,
@@ -268,7 +273,8 @@ const applyFilamentInventory = (items) => {
 };
 
 const saveFilamentInventoryToFirestore = (items) =>
-  saveFilamentInventory(serializeFilamentInventory(items)).catch((error) => {
+  saveFilamentInventory(serializeFilamentInventory(items))
+  .catch((error) => {
     console.error("Failed to save filament inventory", error);
     alert("Save failed. Check the console for details.");
   });

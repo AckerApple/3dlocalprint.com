@@ -15,10 +15,11 @@ const getDomainLabel = (url) => {
 
 export const inventorySummaryRow = tag(
   (item, type, index, toggleRowEdit, onSave) => {
-    inventorySummaryRow.updates((args) => {
+    inventorySummaryRow.inputs((args) => {
       [item, type, index, toggleRowEdit, onSave] = args;
+      toggleRowEdit = output(toggleRowEdit);
+      onSave = output(onSave);
     });
-    toggleRowEdit = output(toggleRowEdit);
 
     const adjustSpoolCount = (event, delta) => {
       const current = Number(item.spool_inventory);

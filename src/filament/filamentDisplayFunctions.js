@@ -1,4 +1,4 @@
-export let editingTarget = null;
+export let editingTarget = {};
 
 export const toggleRowEdit = (index, location) => {
   if (
@@ -6,7 +6,7 @@ export const toggleRowEdit = (index, location) => {
     editingTarget.index === index &&
     (location === undefined || editingTarget.location === location)
   ) {
-    editingTarget = null;
+    editingTarget = {};
     return;
   }
   editingTarget = {
@@ -17,7 +17,7 @@ export const toggleRowEdit = (index, location) => {
 
 export const setEditingIndex = (index, location = "") => {
   if (index === null || index === undefined) {
-    editingTarget = null;
+    editingTarget = {};
     return;
   }
   editingTarget = { index, location };

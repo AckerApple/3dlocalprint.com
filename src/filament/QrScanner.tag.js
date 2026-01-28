@@ -18,11 +18,10 @@ QrScanner.WORKER_PATH = new URL(
 const video = htmlTag("video");
 
 export const QrScannerPanel = tag(({onResult}) => {
-  QrScannerPanel.updates((args) => {
+  QrScannerPanel.inputs((args) => {
     [{onResult}] = args;
     onResult = output(onResult);
   });
-  onResult = output(onResult);
 
   let scanner = null;
   let status = "Idle.";
