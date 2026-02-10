@@ -18,6 +18,12 @@ export const adminNavItems = [
     emoji: "🏭",
   },
   {
+    label: "Ledger",
+    details: "Track incoming and outgoing money entries.",
+    href: "./ledger.html",
+    emoji: "📒",
+  },
+  {
     label: "Manage admins",
     details: "Control who can access the admin tools.",
     href: "./admins.html",

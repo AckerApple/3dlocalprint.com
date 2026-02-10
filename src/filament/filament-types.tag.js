@@ -10,7 +10,8 @@ import {
   label,
   h1,
   p,
-  strong,
+  subscribe,
+  array,
 } from "taggedjs";
 import { materialTypes } from "./materialTypes.array.js";
 import { AdminNav } from "./AdminNav.tag.js";
@@ -31,11 +32,14 @@ import { mountSsoPanel, replaceMountRoot } from "./ssoMount.js";
 import { toast } from "./toast.js";
 import { startAuthFlow } from "./auth-flow.js";
 import { handleAdminAuthUser } from "./auth-handler.js";
+import { FilamentTypesRowDisplay } from "./filament-types/FilamentTypesRowDisplay.tag.js";
 
 let app = document.getElementById("filamentTypesApp");
 const appRoot = { current: app };
-let types = [];
-let stopTypes = null;
+
+let types$ = array()
+let stopTypes = null
+
 let stopManufacturers = null;
 let manufacturers = [];
 let manufacturerFilter = "";
@@ -46,6 +50,7 @@ let isAuthorized = false;
 let appMounted = false;
 let currentUser = null;
 const expandedTypeIds = new Set();
+let pendingFocusTypeId = "";
 const editTypeId = typeof window !== "undefined"
   ? new URLSearchParams(window.location.search).get("edit")
   : "";
@@ -75,45 +80,70 @@ const createEmptyFilamentType = () => ({
   url: "",
 });
 
+/*
 const rerender = () => {
   if (!appRoot.current) return;
   const nextRoot = replaceMountRoot(appRoot);
   if (!nextRoot) return;
   nextRoot.replaceChildren();
   tagElement(FilamentTypesApp, nextRoot);
+  if (pendingFocusTypeId) {
+    const targetId = `filament-type-card-${pendingFocusTypeId}`;
+    requestAnimationFrame(() => {
+      const target = document.getElementById(targetId);
+      if (!target) return;
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+      target.classList.add("is-new-target");
+      window.setTimeout(() => {
+        target.classList.remove("is-new-target");
+      }, 1300);
+    });
+    pendingFocusTypeId = "";
+  }
   appMounted = true;
   app = appRoot.current;
 };
-
+*/
 const addType = () => {
   const next = createEmptyFilamentType();
-  types.unshift(next);
   if (next.filament_type_id) {
     expandedTypeIds.add(next.filament_type_id);
+    pendingFocusTypeId = next.filament_type_id;
   }
+  types$.unshift(next);
 };
 
 const removeType = (index) => {
-  const label = types[index]?.label || "this filament type";
+  const label = types$[index]?.label || "this filament type";
   if (!confirm(`Remove ${label}?`)) return;
-  const id = types[index]?.filament_type_id;
+  const id = types$[index]?.filament_type_id;
   if (id) expandedTypeIds.delete(id);
-  types.splice(index, 1);
+  types$.splice(index, 1);
 };
 
 const saveList = async () => {
   if (!isAuthorized) {
     toast.error("Sign in to save changes.");
-    return;
+    return false;
   }
   try {
-    const cleaned = serializeFilamentTypes(types);
+    const cleaned = serializeFilamentTypes(types$.value);
     await saveFilamentTypes(cleaned);
     toast.success("Filament types saved.");
+    return true;
   } catch (error) {
     console.error("Failed to save filament types", error);
     toast.error("Save failed. Try again.");
+    return false;
   }
+};
+
+const saveType = async (item) => {
+  const didSave = await saveList();
+  if (!didSave) return;
+  const id = item?.filament_type_id;
+  if (!id) return;
+  expandedTypeIds.delete(id);
 };
 
 const handleSignOut = () =>
@@ -171,24 +201,10 @@ const applyBarcodeScan = (text) => {
 };
 
 const filteredTypes = () =>
-  filterByManufacturerAndMaterial(types, {
+  filterByManufacturerAndMaterial(types$.value, {
     manufacturerFilter,
     materialTypeFilter,
   });
-
-const groupTypesByManufacturer = (items) => {
-  const groups = new Map();
-  items.forEach((item) => {
-    const key = item.manufacturer || "Unknown";
-    if (!groups.has(key)) {
-      groups.set(key, []);
-    }
-    groups.get(key).push(item);
-  });
-  return Array.from(groups.entries()).sort(([a], [b]) =>
-    a.localeCompare(b)
-  );
-};
 
 const toggleExpanded = (item) => {
   const id = item?.filament_type_id;
@@ -205,8 +221,16 @@ const isExpanded = (item) => {
   return expandedTypeIds.has(item.filament_type_id);
 };
 
-export const FilamentTypesApp = tag(() => [
+export const FilamentTypesApp = tag(() => {
+
+  console.log('stopTypes', {
+    stopTypes, sub: stopTypes.subscribe,
+    // stopTypes2: stopTypes(),
+  })
+
+  return [
   AdminNav(handleSignOut, currentUser),
+  
   section.class`panel`(
     h1("Filament Types"),
     p("Manage filament type details used by inventory."),
@@ -252,186 +276,26 @@ export const FilamentTypesApp = tag(() => [
       )
     ),
     div.class`swatch-grid`(
-      _=> groupTypesByManufacturer(filteredTypes()).map(([maker, items]) =>
-        div.class`filament-type-group`(
-          strong.class`filament-type-group-title`(
-            maker === "Unknown" ? "🏭 Unknown" : `🏭 ${maker}`
-          ),
-          _=> items.map((item, index) =>
-            div.class`swatch-card`(
-              div.class`filament-type-header`(
-                div
-                  .class`summary-chip filament-type-swatch`
-                  .style(_=> `background:${item.hex || ""};`)(),
-                div(
-                  strong(_=> item.label || "Untitled filament"),
-                  div.class`filament-type-color`(_=> item.color_name || "")
-                ),
-                div.class`filament-type-actions`(
-                  button
-                    .type`button`
-                    .class`ghost-button`
-                    .onClick(() => toggleExpanded(item))(
-                    isExpanded(item) ? "Hide" : "View"
-                  ),
-                  button
-                    .type`button`
-                    .class`ghost-button`
-                    .onClick(() => removeType(index))(
-                    "Remove"
-                  )
-                )
-              ),
-              _=> isExpanded(item) &&
-                div.class`fields`(
-                  label(
-                    "Number",
-                    input
-                      .type`number`
-                      .value(_=> item.number ?? "")
-                      .onInput((event) => {
-                        item.number = event.target.value;
-                      })()
-                  ),
-                  label(
-                    "Label",
-                    input
-                      .value(_=> item.label ?? "")
-                      .onInput((event) => {
-                        item.label = event.target.value;
-                      })()
-                  ),
-                  label(
-                    "🏭 Manufacturer",
-                    select
-                      .onChange((event) => {
-                        item.manufacturer = event?.target?.value || "";
-                      })(
-                      option
-                        .value``
-                        .selected(_=> !item.manufacturer)(
-                        withManufacturerEmoji("Select manufacturer")
-                      ),
-                      _=> (manufacturers || []).map((maker) =>
-                        option
-                          .value(maker)
-                          .selected(_=> item.manufacturer === maker)(maker)
-                          .key(maker)
-                      )
-                    )
-                  ),
-                  label(
-                    "Material Type",
-                    select
-                      .onChange((event) => {
-                        item.material_type = event?.target?.value || "";
-                      })(
-                      option
-                        .value``
-                        .selected(_=> !item.material_type)("Select material"),
-                      _=> materialTypes.map((materialType) =>
-                        option
-                          .value(materialType)
-                          .selected(_=> item.material_type === materialType)(materialType)
-                      )
-                    )
-                  ),
-                  label(
-                    "Color name",
-                    input
-                      .value(_=> item.color_name ?? "")
-                      .onInput((event) => {
-                        item.color_name = event.target.value;
-                      })()
-                  ),
-                  label(
-                    "Hex Color",
-                    input
-                      .value(_=> item.hex ?? "")
-                      .onInput((event) => {
-                        item.hex = event.target.value;
-                      })()
-                  ),
-                  label(
-                    "Filament code",
-                    input
-                      .value(_=> item.swatch_code ?? "")
-                      .onInput((event) => {
-                        item.swatch_code = event.target.value;
-                      })()
-                  ),
-                  label(
-                    "QR Search Data",
-                    div.class`qr-input-row`(
-                      input
-                        .class`qr-edit-input`
-                        .value(_=> item.qr_search_data ?? "")
-                        .onInput((event) => {
-                          item.qr_search_data = event.target.value;
-                        })(),
-                      button
-                        .type`button`
-                        .class`qr-scan-button`
-                        .onClick(() => openQrScanner(item))(
-                        "Scan QR"
-                      )
-                    )
-                  ),
-                  label(
-                    "Bar Codes",
-                    div.class`barcode-inputs`(
-                      _=> {
-                        const is = getBarcodeList(item)
-                        return is.map((barcode, barcodeIndex) =>
-                        div.class`barcode-entry`(
-                          input
-                            .class`qr-edit-input`
-                            .value(barcode ?? "")
-                            .onInput((event) => updateBarcode(item, barcodeIndex, event.target.value))(),
-                          button
-                            .type`button`
-                            .class`ghost-button barcode-remove`
-                            .onClick(() => removeBarcode(item, barcodeIndex))(
-                            "−"
-                          )
-                        ).key(`${item.filament_type_id}-${barcodeIndex}`)
-                      )},
-                      div.class`barcode-actions`(
-                        button
-                          .type`button`
-                          .class`ghost-button`
-                          .onClick(() => addBarcode(item))(
-                          "➕ Add barcode"
-                        ),
-                        button
-                          .type`button`
-                          .class`qr-scan-button`
-                          .onClick(() => openBarcodeScanner(item))(
-                          "Scan barcode"
-                        )
-                      )
-                    )
-                  ),
-                  label(
-                    "URL",
-                    input
-                      .type`url`
-                      .value(_=> item.url ?? "")
-                      .onInput((event) => {
-                        item.url = event.target.value;
-                      })()
-                  ),
-                  label(
-                    "Type ID",
-                    input
-                      .attr("readonly", true)
-                      .value(_=> item.filament_type_id || "")()
-                  )
-                )
-            ).key(item.filament_type_id || index)
-          )
-        ).key(maker)
-      )
+      subscribe(
+        types$,
+        types => FilamentTypesRowDisplay({
+          types,
+          filteredTypes,
+          isExpanded,
+          toggleExpanded,
+          removeType,
+          getBarcodeList,
+          updateBarcode,
+          addBarcode,
+          removeBarcode,
+          openQrScanner,
+          openBarcodeScanner,
+          saveType,
+          manufacturers,
+          materialTypes,
+          withManufacturerEmoji,
+        })
+      ),
     ),
     _=> activeQrItem &&
       CodeScannerModal({
@@ -455,7 +319,7 @@ export const FilamentTypesApp = tag(() => [
         ScannerPanel: BarcodeScannerPanel,
       })
   ),
-]);
+]});
 
 const serializeFilamentTypes = (items) =>
   (Array.isArray(items) ? items : []).map((item) => {
@@ -543,19 +407,22 @@ const handleAuthUser = async (user, reason = "") => {
       isAuthorized = true;
       if (!stopTypes) {
         stopTypes = subscribeFilamentTypes((items) => {
+          console.log('items ++++++', {items})
+          types$.length = 0
+
           if (Array.isArray(items)) {
-            types = items.map((item) => ({ ...item }));
-          } else {
-            types = [];
+            types$.push( ...items.map((item) => ({ ...item })) )
           }
+          
           if (appMounted) {
-            rerender();
             return;
           }
           if (isAuthorized) {
             mountApp("types:update");
           }
         });
+
+        console.log('stopTypes ready ---', {stopTypes})
       }
       if (!stopManufacturers) {
         stopManufacturers = subscribeManufacturers((items) => {
@@ -565,7 +432,7 @@ const handleAuthUser = async (user, reason = "") => {
             manufacturers = [];
           }
           if (appMounted) {
-            rerender();
+            console.log('✅')
             return;
           }
           if (isAuthorized) {

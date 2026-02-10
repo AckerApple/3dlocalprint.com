@@ -41,6 +41,7 @@ const FILAMENT_INVENTORY_DOC = doc(db, "filament_inventory", "list");
 const FILAMENT_TYPES_DOC = doc(db, "filament_types", "list");
 const MANUFACTURERS_DOC = doc(db, "manufacturers", "list");
 const ADMINS_DOC = doc(db, "admins", "list");
+const LEDGER_DOC = doc(db, "ledger", "entries");
 
 const normalizeEmail = (email = "") => email.trim().toLowerCase();
 
@@ -294,6 +295,81 @@ const saveAdmins = (items) =>
     { merge: true }
   );
 
+const loadLedgerEntries = async () => {
+  const snapshot = await getDoc(LEDGER_DOC);
+  if (!snapshot.exists()) {
+    return [];
+  }
+  const data = snapshot.data();
+  return Array.isArray(data.items) ? data.items : [];
+};
+
+const serializeLedgerEntries = (items = []) =>
+  (Array.isArray(items) ? items : []).map((item) => {
+    const amount = Number(item.amount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      throw new Error("Ledger amount must be greater than 0.");
+    }
+    const title = String(item.title || "").trim();
+    if (!title) {
+      throw new Error("Ledger title is required.");
+    }
+    const direction = String(item.direction || "");
+    if (!["debit", "credit"].includes(direction)) {
+      throw new Error("Ledger direction must be debit or credit.");
+    }
+    const applicableDate = String(item.applicableDate || "");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(applicableDate)) {
+      throw new Error("Ledger applicable date must be a valid YYYY-MM-DD value.");
+    }
+    const id = String(item.id || "").trim();
+    if (!id) {
+      throw new Error("Ledger id is required.");
+    }
+
+    return {
+      id,
+      amount,
+      direction,
+      title,
+      billingCategory: String(item.billingCategory || "").trim() || "",
+      applicableDate,
+      notes: String(item.notes || "").trim(),
+      status: ["pending", "posted", "reconciled"].includes(item.status)
+        ? item.status
+        : "posted",
+      createdAt: Number(item.createdAt) || Date.now(),
+      updatedAt: Number(item.updatedAt) || Date.now(),
+    };
+  });
+
+const saveLedgerEntries = (items) =>
+  setDoc(
+    LEDGER_DOC,
+    {
+      items: serializeLedgerEntries(items),
+      updatedAt: serverTimestamp(),
+    },
+    { merge: true }
+  );
+
+const subscribeLedgerEntries = (callback) =>
+  onSnapshot(
+    LEDGER_DOC,
+    (snapshot) => {
+      if (!snapshot.exists()) {
+        callback([]);
+        return;
+      }
+      const data = snapshot.data();
+      callback(Array.isArray(data.items) ? data.items : []);
+    },
+    (error) => {
+      console.error("Failed to subscribe to ledger entries", error);
+      callback([]);
+    }
+  );
+
 export {
   db,
   auth,
@@ -314,4 +390,7 @@ export {
   subscribeAdmins,
   saveAdmins,
   loadAdmins,
+  loadLedgerEntries,
+  saveLedgerEntries,
+  subscribeLedgerEntries,
 };

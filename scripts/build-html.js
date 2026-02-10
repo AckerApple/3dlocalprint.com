@@ -43,6 +43,15 @@ const pages = [
       }),
   },
   {
+    path: resolve(filamentDir, "ledger.html"),
+    render: () =>
+      filamentStandalonePage({
+        pageTitle: "Ledger",
+        appId: "ledgerApp",
+        appScript: "ledger.tag.js",
+      }),
+  },
+  {
     path: resolve(filamentDir, "admins.html"),
     render: () =>
       filamentStandalonePage({

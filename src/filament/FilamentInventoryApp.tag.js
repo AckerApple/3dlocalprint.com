@@ -50,8 +50,8 @@ export const FilamentInventoryApp = tag(
     let typesLoading = false;
     let typesError = "";
 
-    const addFilament = () => {
-      data.unshift(createEmptyInventoryItem(locations[0] || "", filamentTypes));
+    const addFilamentForLocation = (location) => {
+      data.unshift(createEmptyInventoryItem(location || locations[0] || "", filamentTypes));
       setEditingIndex(0, data[0]?.location || "");
     };
 
@@ -70,6 +70,20 @@ export const FilamentInventoryApp = tag(
       };
       data.splice(index + 1, 0, clone);
       setEditingIndex(index + 1, clone.location || "");
+    };
+
+    const zeroOutLocationInventory = (location) => {
+      const locationItems = data.filter((item) => (item.location || "") === location);
+      if (!locationItems.length) {
+        return;
+      }
+      if (!confirm(`Zero out all spool inventory for ${location}?`)) {
+        return;
+      }
+      locationItems.forEach((item) => {
+        item.spool_inventory = 0;
+      });
+      tag.promise = saveFilamentInventoryToFirestore(data);
     };
 
     let locationFilter = "";
@@ -153,17 +167,6 @@ export const FilamentInventoryApp = tag(
           div.class`meta`(
             div.class`controls`(
               div.class`controls-group`(
-                button(
-                  {
-                    id: "addFilamentButton",
-                    class: "add-button",
-                    type: "button",
-                    onClick: addFilament,
-                  },
-                  "➕ Add filament"
-                ),
-              ),
-              div.class`controls-group`(
                 select
                   .value(_=> filamentTypeFilter ?? "")
                   .onChange((event) => {
@@ -207,10 +210,24 @@ export const FilamentInventoryApp = tag(
                     h2.class`location-title`(`📍 ${location} (${items.length})`),
                     location === unassignedLabel
                       ? null
-                      : a
-                          .class`ghost-button location-fast-edit`
-                          .href`./${slugifyLocation(location)}/fast-edit.html`
-                          ("⚡ Fast edit")
+                      : div.class`location-actions`(
+                          a
+                            .class`ghost-button location-fast-edit`
+                            .href`./${slugifyLocation(location)}/fast-edit.html`
+                            ("⚡ Fast edit"),
+                          button
+                            .type`button`
+                            .class`add-button`
+                            .onClick(() => addFilamentForLocation(location))(
+                            "➕ Add filament"
+                          ),
+                          button
+                            .type`button`
+                            .class`ghost-button delete-button`
+                            .onClick(() => zeroOutLocationInventory(location))(
+                            "Zero out"
+                          )
+                        )
                   ),
                   _=> items.map(({ item, index, type }) =>
                     InventoryRow(

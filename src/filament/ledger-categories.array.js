@@ -1,0 +1,16 @@
+export const ledgerCategories = [
+  "Sales Revenue",
+  "Owner Contribution",
+  "Filament",
+  "Printer Parts",
+  "Tools",
+  "Packaging",
+  "Shipping Expense",
+  "Shipping Income",
+  "Bank Bonus Income",
+  "Marketing",
+  "Software",
+  "Event Fees",
+  "Sales Tax Collected",
+  "Other",
+];
