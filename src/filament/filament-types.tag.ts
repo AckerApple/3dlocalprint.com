@@ -32,7 +32,7 @@ import { mountSsoPanel, replaceMountRoot } from "./ssoMount.js";
 import { toast } from "./toast.js";
 import { startAuthFlow } from "./auth-flow.js";
 import { handleAdminAuthUser } from "./auth-handler.js";
-import { FilamentTypesRowDisplay } from "./filament-types/FilamentTypesRowDisplay.tag.js";
+import { FilamentTypesRowDisplay } from "./filament-types/FilamentTypesRowDisplay.tag.ts";
 
 let app = document.getElementById("filamentTypesApp");
 const appRoot = { current: app };
@@ -113,7 +113,7 @@ const addType = () => {
   types$.unshift(next);
 };
 
-const removeType = (index) => {
+export const removeType = (index) => {
   const label = types$[index]?.label || "this filament type";
   if (!confirm(`Remove ${label}?`)) return;
   const id = types$[index]?.filament_type_id;
@@ -138,7 +138,7 @@ const saveList = async () => {
   }
 };
 
-const saveType = async (item) => {
+export const saveType = async (item) => {
   const didSave = await saveList();
   if (!didSave) return;
   const id = item?.filament_type_id;
@@ -152,31 +152,31 @@ const handleSignOut = () =>
     toast.error("Sign out failed. Try again.");
   });
 
-const getBarcodeList = (item) => normalizeBarcodeList(item.barcode_search_data);
+export const getBarcodeList = (item) => normalizeBarcodeList(item.barcode_search_data);
 
-const updateBarcode = (item, index, value) => {
+export const updateBarcode = (item, index, value) => {
   const next = getBarcodeList(item);
   next[index] = (value || "").trim();
   item.barcode_search_data = next.filter(Boolean);
 };
 
-const addBarcode = (item) => {
+export const addBarcode = (item) => {
   const next = getBarcodeList(item);
   next.push("");
   item.barcode_search_data = next;
 };
 
-const removeBarcode = (item, index) => {
+export const removeBarcode = (item, index) => {
   const next = getBarcodeList(item);
   next.splice(index, 1);
   item.barcode_search_data = next;
 };
 
-const openQrScanner = (item) => {
+export const openQrScanner = (item) => {
   activeQrItem = item;
 };
 
-const openBarcodeScanner = (item) => {
+export const openBarcodeScanner = (item) => {
   activeBarcodeItem = item;
 };
 
@@ -206,7 +206,7 @@ const filteredTypes = () =>
     materialTypeFilter,
   });
 
-const toggleExpanded = (item) => {
+export const toggleExpanded = (item) => {
   const id = item?.filament_type_id;
   if (!id) return;
   if (expandedTypeIds.has(id)) {
@@ -214,11 +214,6 @@ const toggleExpanded = (item) => {
   } else {
     expandedTypeIds.add(id);
   }
-};
-
-const isExpanded = (item) => {
-  if (!item?.filament_type_id) return false;
-  return expandedTypeIds.has(item.filament_type_id);
 };
 
 export const FilamentTypesApp = tag(() => {
@@ -280,17 +275,10 @@ export const FilamentTypesApp = tag(() => {
         types$,
         types => FilamentTypesRowDisplay({
           types,
+          expandedTypeIds,
           filteredTypes,
-          isExpanded,
-          toggleExpanded,
-          removeType,
           getBarcodeList,
-          updateBarcode,
-          addBarcode,
           removeBarcode,
-          openQrScanner,
-          openBarcodeScanner,
-          saveType,
           manufacturers,
           materialTypes,
           withManufacturerEmoji,

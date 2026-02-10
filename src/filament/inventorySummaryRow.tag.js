@@ -51,7 +51,7 @@ export const inventorySummaryRow = tag(
       ),
       div.class`summary-details`(
         div.class`summary-title-row`(
-          strong(_=> type?.label || "Untitled filament"),
+          strong(_=> type?.label),
           button
             .type`button`
             .class`summary-edit-button`

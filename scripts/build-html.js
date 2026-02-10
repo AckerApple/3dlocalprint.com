@@ -30,7 +30,7 @@ const pages = [
       filamentStandalonePage({
         pageTitle: "Filament Types",
         appId: "filamentTypesApp",
-        appScript: "filament-types.tag.js",
+        appScript: "filament-types.tag.ts",
       }),
   },
   {

@@ -6,7 +6,6 @@ import {
   dialog,
   div,
   onDestroy,
-  onInit,
 } from "taggedjs";
 import { QrScannerPanel } from "./QrScanner.tag.js";
 
@@ -83,12 +82,6 @@ export const CodeScannerModal = tag(
       }
       closeDialog();
     };
-
-    onInit(() => {
-      setTimeout(() => {
-        document.getElementById(dialogId).showModal()
-      }, 10)
-    })
 
     return dialog
       .id(dialogId)

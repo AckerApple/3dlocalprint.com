@@ -7,6 +7,7 @@
   "scripts": {
     "build:html": "node scripts/build-html.js",
     "dev": "npm run build:html && vite",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
     "bump": "npm version patch --no-git-tag-version",
     "build": "npm run build:html && vite build",
     "preview": "vite preview",
@@ -24,6 +25,8 @@
   },
   "homepage": "https://github.com/AckerApple/3dlocalprint#readme",
   "devDependencies": {
+    "@types/node": "^24.3.1",
+    "typescript": "^5.9.2",
     "vite": "^6.4.1"
   },
   "dependencies": {

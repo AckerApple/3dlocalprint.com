@@ -108,10 +108,10 @@ export const FilamentFastEditApp = tag((location, locationSlug) => {
   let matches = [];
   let lastScan = { token: "", at: 0 };
 
-  const refreshInventory = () => {
+  const fetchInventory = () => {
     if (!loadFilamentTypes || isLoading || hasLoaded) return;
     isLoading = true;
-    tag.promise = loadFilamentTypes()
+    return loadFilamentTypes()
       .then((typeItems) => {
         types = Array.isArray(typeItems) ? typeItems : [];
         loadError = "";
@@ -126,9 +126,13 @@ export const FilamentFastEditApp = tag((location, locationSlug) => {
       .finally(() => {
         isLoading = false;
       });
-  };
+  }
 
-  refreshInventory();
+  const refreshInventory = tag.callback(() => {
+    return fetchInventory()
+  })
+
+  tag.promise = fetchInventory()
 
   const setMode = (nextMode) => {
     mode = nextMode;
@@ -202,6 +206,9 @@ export const FilamentFastEditApp = tag((location, locationSlug) => {
         mode === "add" ? "Inventory added." : "Inventory removed."
       );
       matches = [];
+      mode = "";
+      scanStatus = "Choose add or remove to start scanning.";
+      lastScan = { token: "", at: 0 };
       hasLoaded = false;
       refreshInventory();
     } catch (error) {
@@ -210,10 +217,20 @@ export const FilamentFastEditApp = tag((location, locationSlug) => {
     }
   };
 
-  const actionLabel =
+  const getActionLabel = _=>
     mode === "add" ? "ADD INVENTORY" : "REMOVE FROM INVENTORY";
+  const modeLabel = () => {
+    if (mode === "add") return "Add mode";
+    if (mode === "remove") return "Remove mode";
+    return "Mode";
+  };
 
   const hasMatches = () => matches.length > 0;
+  const canApply = () => Boolean(mode) && hasMatches();
+  const disabledActionLabel = () => {
+    if (!mode) return "SELECT MODE TO CONTINUE";
+    return mode === "add" ? "SCAN TO ADD INVENTORY" : "SCAN TO REMOVE INVENTORY";
+  };
 
   return div.class`fast-edit-page`(
     header.class`fast-edit-header`(
@@ -233,7 +250,7 @@ export const FilamentFastEditApp = tag((location, locationSlug) => {
     ),
     section.class`panel fast-edit-panel`(
       div.class`fast-edit-mode`(
-        span.class`fast-edit-label`("Mode"),
+        span.class`fast-edit-label`(_=> modeLabel()),
         div.class`fast-edit-actions`(
           button
             .type`button`
@@ -295,13 +312,13 @@ export const FilamentFastEditApp = tag((location, locationSlug) => {
             ).key(entry.key)
           )
         ),
-      _=> hasMatches() &&
-        button
-          .type`button`
-          .class`add-button fast-edit-submit`
-          .onClick(() => applyInventory())(
-          actionLabel
-        )
+      button
+        .type`button`
+        .class`add-button fast-edit-submit`
+        .disabled(_=> !canApply())
+        .onClick(applyInventory)(
+        _=> (canApply() ? getActionLabel() : disabledActionLabel())
+      )
     )
   );
 });

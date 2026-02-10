@@ -8,14 +8,35 @@ import {
   output,
 } from "taggedjs";
 
-const video = htmlTag("video");
+type BarcodeScannerProps = {
+  onResult?: (value: string) => void;
+  formats?: string[];
+};
 
-export const BarcodeScannerPanel = tag(({ onResult, formats }) => {
-  BarcodeScannerPanel.updates((args) => {
-    [{ onResult, formats }] = args;
-    onResult = output( onResult || (() => undefined));
+type DetectedBarcode = {
+  rawValue?: string;
+  format?: string;
+};
+
+type BarcodeDetectorLike = {
+  detect(source: HTMLVideoElement): Promise<DetectedBarcode[]>;
+};
+
+type BarcodeDetectorCtor = new (options: {
+  formats: string[];
+}) => BarcodeDetectorLike;
+
+const video = htmlTag("video");
+const getErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : String(error);
+
+export const BarcodeScannerPanel = tag(
+  ({ onResult, formats }: BarcodeScannerProps = {}) => {
+  
+  BarcodeScannerPanel.inputs((args: [BarcodeScannerProps]) => {
+    [{ onResult, formats } = {} as any] = args;
+    onResult = output(onResult)
   });
-  onResult = output( onResult || (() => undefined));
 
   const activeFormats =
     Array.isArray(formats) && formats.length
@@ -35,19 +56,21 @@ export const BarcodeScannerPanel = tag(({ onResult, formats }) => {
   let status = "Idle.";
   let lastText = "";
   let lastFormat = "";
-  let detector = null;
-  let stream = null;
-  let rafId = null;
+  let detector: BarcodeDetectorLike | null = null;
+  let stream: MediaStream | null = null;
+  let rafId: number | null = null;
   const previewId = `barcodePreview-${Math.random().toString(36).slice(2, 9)}`;
 
-  const setStatus = (message) => {
+  const setStatus = (message: string) => {
     console.log("[barcode] status:", message);
     status = message;
   };
 
-  const setOutput = (text, format) => {
+  const setOutput = (text = "", format = "") => {
     lastText = text || "";
     lastFormat = format || "";
+
+    console.log('SET!', { lastText })
   };
 
   const stopScanner = () => {
@@ -63,15 +86,15 @@ export const BarcodeScannerPanel = tag(({ onResult, formats }) => {
     setStatus("Camera stopped.");
   };
 
-  const onDetected = (value) => {
+  const onDetected = tag.callback((value: string) => {
     try {
       onResult(value);
     } catch (error) {
       console.error("[barcode] onResult failed", error);
     }
-  };
+  })
 
-  const scanLoop = async (preview) => {
+  const scanLoop = async (preview: HTMLVideoElement) => {
     if (!detector || !stream) {
       return;
     }
@@ -95,25 +118,28 @@ export const BarcodeScannerPanel = tag(({ onResult, formats }) => {
     } catch (error) {
       const stack = new Error("Barcode scan loop error").stack;
       console.error("[barcode] scan loop stack trace", stack);
-      setStatus(`Scan error: ${error.message || error}`);
+      setStatus(`Scan error: ${getErrorMessage(error)}`);
     }
 
     rafId = requestAnimationFrame(() => scanLoop(preview));
   };
 
   const startScanner = async () => {
-    if (!("BarcodeDetector" in window)) {
+    const BarcodeDetector = (
+      window as Window & { BarcodeDetector?: BarcodeDetectorCtor }
+    ).BarcodeDetector;
+    if (!BarcodeDetector) {
       setStatus("BarcodeDetector API is not supported in this browser.");
       return;
     }
 
     try {
       setStatus("Requesting camera access...");
-      const preview = await new Promise((resolve) => {
+      const preview = await new Promise<HTMLVideoElement | null>((resolve) => {
         let attempts = 0;
         const tick = () => {
           const element = document.getElementById(previewId);
-          if (element) {
+          if (element instanceof HTMLVideoElement) {
             return resolve(element);
           }
           attempts += 1;
@@ -144,10 +170,10 @@ export const BarcodeScannerPanel = tag(({ onResult, formats }) => {
       preview.srcObject = stream;
       await preview.play();
       setStatus("Scanning...");
-      scanLoop(preview);
+      void scanLoop(preview);
     } catch (error) {
       console.error("[barcode] camera error:", error);
-      setStatus(`Camera error: ${error.message || error}`);
+      setStatus(`Camera error: ${getErrorMessage(error)}`);
       stopScanner();
     }
   };
@@ -157,7 +183,7 @@ export const BarcodeScannerPanel = tag(({ onResult, formats }) => {
     console.log("🔴 stop barcode scanner tag destroyed");
   });
 
-  startScanner();
+  tag.promise = startScanner();
 
   const formatLabel = () => {
     if (!lastText) return "";
@@ -178,8 +204,8 @@ export const BarcodeScannerPanel = tag(({ onResult, formats }) => {
     div(
       { class: "qr-output" },
       span({ class: "qr-label" }, "Barcode Data"),
-      pre({ class: "qr-text" }, () => formatLabel() || "(no scan yet)")
+      pre({ class: "qr-text" }, _ => formatLabel() || "(no scan yet)")
     ),
-    div({ class: "qr-status" }, () => status)
+    div({ class: "qr-status" }, _ => status)
   );
 });

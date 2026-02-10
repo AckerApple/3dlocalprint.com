@@ -8,40 +8,29 @@ import {
   select,
   option,
 } from "taggedjs";
+import { addBarcode, getBarcodeList, openBarcodeScanner, openQrScanner, removeBarcode, removeType, saveType, toggleExpanded, updateBarcode } from "../filament-types.tag";
 
-export const FilamentTypesRowDisplay = tag((props = {}) => {
+const toPickerHex = (value: unknown) => {
+  const text = String(value || "").trim();
+  if (/^#[0-9a-fA-F]{6}$/.test(text)) return text;
+  if (/^[0-9a-fA-F]{6}$/.test(text)) return `#${text}`;
+  return "#000000";
+};
+
+export const FilamentTypesRowDisplay = tag(({
+  types = [],
+  expandedTypeIds = new Set(),
+  manufacturers = [],
+  materialTypes = [],
+  withManufacturerEmoji = (text) => text,
+} = {}) => {
   let groupTypesByManufacturer = []
-  let {
-    types = [],
-    isExpanded = () => false,
-    toggleExpanded = () => {},
-    removeType = () => {},
-    getBarcodeList = () => [],
-    updateBarcode = () => {},
-    addBarcode = () => {},
-    removeBarcode = () => {},
-    openQrScanner = () => {},
-    openBarcodeScanner = () => {},
-    saveType = () => {},
-    manufacturers = [],
-    materialTypes = [],
-    withManufacturerEmoji = (text) => text,
-  } = props;
 
   FilamentTypesRowDisplay.inputs((args) => {
     [{
       types = [],
+      expandedTypeIds,
       groupTypesByManufacturer,
-      isExpanded = () => false,
-      toggleExpanded = () => {},
-      removeType = () => {},
-      getBarcodeList = () => [],
-      updateBarcode = () => {},
-      addBarcode = () => {},
-      removeBarcode = () => {},
-      openQrScanner = () => {},
-      openBarcodeScanner = () => {},
-      saveType = () => {},
       manufacturers = [],
       materialTypes = [],
       withManufacturerEmoji = (text) => text,
@@ -49,6 +38,11 @@ export const FilamentTypesRowDisplay = tag((props = {}) => {
 
     groupTypesByManufacturer = getGroupTypesByManufacturer(types)
   });
+
+  const isExpanded = (item) => {
+    if (!item?.filament_type_id) return false;
+    return expandedTypeIds.has(item.filament_type_id);
+  };
 
   return [_=> groupTypesByManufacturer.map(([maker, items]) => {
     return div.class`filament-type-group`(
@@ -65,7 +59,7 @@ export const FilamentTypesRowDisplay = tag((props = {}) => {
               .class`summary-chip filament-type-swatch`
               .style(_=> `background:${item.hex || ""};`)(),
             div(
-              strong(_=> item.label || "Untitled filament"),
+              strong(_=> item.label),
               div.class`filament-type-color`(_=> item.color_name || "")
             ),
             div.class`filament-type-actions`(
@@ -148,11 +142,19 @@ export const FilamentTypesRowDisplay = tag((props = {}) => {
                 ),
                 label(
                   "Hex Color",
-                  input
-                    .value(_=> item.hex ?? "")
-                    .onInput((event) => {
-                      item.hex = event.target.value;
-                    })()
+                  div.class`hex-input-row`(
+                    input
+                      .value(_=> item.hex ?? "")
+                      .onInput((event) => {
+                        item.hex = event.target.value;
+                      })(),
+                    input
+                      .type`color`
+                      .value(_=> toPickerHex(item.hex))
+                      .onChange((event) => {
+                        item.hex = event.target.value;
+                      })()
+                  )
                 ),
                 label(
                   "Filament code",
